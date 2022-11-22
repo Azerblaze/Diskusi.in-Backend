@@ -35,11 +35,10 @@ func (db GormSql) GetUserByUsername(username string) (models.User, error) {
 	}
 	return user, nil
 }
-func (db GormSql) Login(email, password string) (models.User, error) {
+func (db GormSql) GetUserByEmail(email string) (models.User, error) {
 	var user models.User
 	err := db.DB.
-		Where("email = ? AND password = ?",
-			email, password).
+		Where("email = ?", email).
 		First(&user).Error
 	if err != nil {
 		return models.User{}, err

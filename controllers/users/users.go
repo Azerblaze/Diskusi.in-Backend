@@ -14,9 +14,7 @@ type UserHandler struct {
 }
 
 func (h *UserHandler) Register(c echo.Context) error {
-	// validation
 	var u models.User
-
 	err := c.Bind(&u)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
@@ -53,6 +51,24 @@ func (h *UserHandler) Register(c echo.Context) error {
 	if len(u.Password) < 8 {
 		return c.JSON(http.StatusBadRequest, map[string]interface{}{
 			"message": "password can not less than 8",
+		})
+	}
+	// isUsernameLessThan3?
+	if len(u.Username) < 3 {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": "username can not less than 3",
+		})
+	}
+	// isPasswordContainNumber
+	if !helper.IsStringContainNumber(u.Password) {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": "password should be contain number",
+		})
+	}
+	// isPasswordContainUppercaseLetter
+	if !helper.IsStringContainUppercaseLetter(u.Password) {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"message": "password should be contain uppercase letter",
 		})
 	}
 
