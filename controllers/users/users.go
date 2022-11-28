@@ -13,7 +13,14 @@ type UserHandler struct {
 	users.IUserServices
 }
 
+func CustomHeaderResponse(c echo.Context) echo.Context {
+	return helper.CustomHeaderResponse(c)
+}
+
 func (h *UserHandler) Register(c echo.Context) error {
+
+	CustomHeaderResponse(c)
+
 	var u models.User
 	err := c.Bind(&u)
 	if err != nil {
@@ -87,7 +94,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 func (h *UserHandler) Login(c echo.Context) error {
 
 	// enable cors
-	c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+	CustomHeaderResponse(c)
 
 	var u models.User
 	err := c.Bind(&u)

@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"unicode"
 
+	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -32,4 +33,15 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func CustomHeaderResponse(c echo.Context) echo.Context {
+
+	allowedHeaders := "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization,X-CSRF-Token"
+	c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+	c.Response().Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	c.Response().Header().Set("Access-Control-Allow-Headers", allowedHeaders)
+	c.Response().Header().Set("Access-Control-Expose-Headers", "Authorization")
+
+	return c
 }
