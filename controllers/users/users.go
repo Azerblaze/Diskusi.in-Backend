@@ -86,6 +86,9 @@ func (h *UserHandler) Register(c echo.Context) error {
 
 func (h *UserHandler) Login(c echo.Context) error {
 
+	// enable cors
+	c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+
 	var u models.User
 	err := c.Bind(&u)
 	if err != nil {
