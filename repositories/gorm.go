@@ -222,3 +222,41 @@ func (db GormSql) DeleteComment(co int) error {
 
 	return nil
 }
+
+// Reply -------------------------------------------------------------------------------------------------------------------------------------------------
+func (db GormSql) SaveNewReply(reply models.Reply) error {
+	err := db.DB.Create(&reply).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db GormSql) GetReplyById(re int) (models.Reply, error) {
+	var reply models.Reply
+	err := db.DB.Where("id = ?", re).Find(&reply).Error
+	if err != nil {
+		return models.Reply{}, err
+	}
+
+	return reply, nil
+}
+
+func (db GormSql) SaveReply(reply models.Reply) error {
+	err := db.DB.Save(&reply).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db GormSql) DeleteReply(re int) error {
+	err := db.DB.Delete(&models.Comment{}, re).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

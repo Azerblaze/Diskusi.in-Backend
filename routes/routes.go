@@ -6,6 +6,7 @@ import (
 	"discusiin/repositories"
 	cService "discusiin/services/comments"
 	pService "discusiin/services/posts"
+	rService "discusiin/services/replys"
 	tService "discusiin/services/topics"
 	uService "discusiin/services/users"
 
@@ -22,6 +23,7 @@ type Payload struct {
 	tService tService.ITopicServices
 	pService pService.IPostServices
 	cService cService.ICommentServices
+	rService rService.IReplyServices
 }
 
 func (p *Payload) InitUserService() {
@@ -99,4 +101,21 @@ func (p *Payload) InitCommentService() {
 	}
 
 	p.cService = cService.NewCommentServices(p.repoSql)
+}
+
+// Reply -----------------------------------------------------------------------------------------------------------------
+func (p *Payload) GetReplyServices() rService.IReplyServices {
+	if p.rService == nil {
+		p.InitReplyService()
+	}
+
+	return p.rService
+}
+
+func (p *Payload) InitReplyService() {
+	if p.repoSql == nil {
+		p.InitRepoMysql()
+	}
+
+	p.rService = rService.NewReplyServices(p.repoSql)
 }

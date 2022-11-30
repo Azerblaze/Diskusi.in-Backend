@@ -28,4 +28,9 @@ type IDatabase interface {
 	GetCommentById(commendID int) (models.Comment, error)
 	SaveComment(comment models.Comment) error
 	DeleteComment(commentID int) error
+
+	SaveNewReply(reply models.Reply) error
+	GetReplyById(re int) (models.Reply, error)
+	SaveReply(reply models.Reply) error
+	DeleteReply(re int) error
 }
