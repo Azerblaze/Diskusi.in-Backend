@@ -14,7 +14,7 @@ func NewReplyServices(db repositories.IDatabase) IReplyServices {
 type IReplyServices interface {
 	CreateReply(reply models.Reply, co int, token dto.Token) error
 	GetAllReply(commentId int) ([]dto.PublicReply, error)
-	UpdateReply(newReply models.Reply, re int, userId int) error
+	UpdateReply(newReply models.Reply, replyId int, token dto.Token) error
 	DeleteReply(re int, userId int) error
 }
 
@@ -62,15 +62,15 @@ func (r *replyServices) GetAllReply(commentId int) ([]dto.PublicReply, error) {
 	return result, nil
 }
 
-func (r *replyServices) UpdateReply(newReply models.Reply, re int, userId int) error {
+func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dto.Token) error {
 	//find reply
-	reply, err := r.IDatabase.GetReplyById(re)
+	reply, err := r.IDatabase.GetReplyById(replyId)
 	if err != nil {
 		return err
 	}
 
 	//check if user are correct
-	if reply.UserID != userId {
+	if reply.UserID != int(token.ID) {
 		return errors.New("user not eligible")
 	}
 

@@ -78,20 +78,37 @@ func (h *ReplyHandler) GetAllReply(c echo.Context) error {
 
 func (h *ReplyHandler) UpdateReply(c echo.Context) error {
 	var newReply models.Reply
-	c.Bind(&newReply)
+	errBind := c.Bind(&newReply)
+	if errBind != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": errBind.Error(),
+			// "message": errors.New("hallo semuanya"),
+		})
+	}
 
 	//get logged userId
-	// code here
-	userId := 1 //untuk percobaan
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": errDecodeJWT.Error(),
+			// "message": errors.New("hai"),
+		})
+	}
 
 	//get reply id
-	re, _ := strconv.Atoi(c.Param("re"))
+	replyId, errAtoi := strconv.Atoi(c.Param("reply_id"))
+	if errAtoi != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": errAtoi.Error(),
+		})
+	}
 
 	//update reply
-	err := h.IReplyServices.UpdateReply(newReply, re, userId)
+	err := h.IReplyServices.UpdateReply(newReply, replyId, token)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
 			"message": err.Error(),
+			// "message": errors.New("hallo semua"),
 		})
 	}
 
