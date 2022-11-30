@@ -15,7 +15,7 @@ type IReplyServices interface {
 	CreateReply(reply models.Reply, co int, token dto.Token) error
 	GetAllReply(commentId int) ([]dto.PublicReply, error)
 	UpdateReply(newReply models.Reply, replyId int, token dto.Token) error
-	DeleteReply(re int, userId int) error
+	DeleteReply(replyId int, token dto.Token) error
 }
 
 type replyServices struct {
@@ -87,20 +87,20 @@ func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dt
 	return nil
 }
 
-func (r *replyServices) DeleteReply(re int, userId int) error {
+func (r *replyServices) DeleteReply(replyId int, token dto.Token) error {
 	//find reply
-	reply, err := r.IDatabase.GetReplyById(re)
+	reply, err := r.IDatabase.GetReplyById(replyId)
 	if err != nil {
 		return err
 	}
 
 	//check if user are correct
-	if reply.UserID != userId {
+	if reply.UserID != int(token.ID) {
 		return errors.New("user not eligible")
 	}
 
 	//delete reply
-	err = r.IDatabase.DeleteReply(re)
+	err = r.IDatabase.DeleteReply(replyId)
 	if err != nil {
 		return err
 	}

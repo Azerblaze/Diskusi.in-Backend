@@ -263,7 +263,7 @@ func (db GormSql) SaveReply(reply models.Reply) error {
 }
 
 func (db GormSql) DeleteReply(re int) error {
-	err := db.DB.Delete(&models.Comment{}, re).Error
+	err := db.DB.Delete(&models.Reply{}, re).Error
 	if err != nil {
 		return err
 	}
