@@ -13,6 +13,7 @@ func NewReplyServices(db repositories.IDatabase) IReplyServices {
 
 type IReplyServices interface {
 	CreateReply(reply models.Reply, co int, token dto.Token) error
+	GetAllReply(commentId int) ([]dto.PublicReply, error)
 	UpdateReply(newReply models.Reply, re int, userId int) error
 	DeleteReply(re int, userId int) error
 }
@@ -21,9 +22,9 @@ type replyServices struct {
 	repositories.IDatabase
 }
 
-func (p *replyServices) CreateReply(reply models.Reply, co int, token dto.Token) error {
+func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token) error {
 	//get comment
-	comment, err := p.IDatabase.GetCommentById(co)
+	comment, err := r.IDatabase.GetCommentById(co)
 	if err != nil {
 		return err
 	}
@@ -33,7 +34,7 @@ func (p *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 	reply.UserID = int(token.ID)
 
 	//create reply
-	err = p.IDatabase.SaveNewReply(reply)
+	err = r.IDatabase.SaveNewReply(reply)
 	if err != nil {
 		return err
 	}
@@ -41,9 +42,29 @@ func (p *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 	return nil
 }
 
-func (p *replyServices) UpdateReply(newReply models.Reply, re int, userId int) error {
+func (r *replyServices) GetAllReply(commentId int) ([]dto.PublicReply, error) {
+	replys, err := r.IDatabase.GetAllReplyByComment(commentId)
+	if err != nil {
+		return []dto.PublicReply{}, err
+	}
+
+	var result []dto.PublicReply
+	for _, reply := range replys {
+		result = append(result, dto.PublicReply{
+			Model:     reply.Model,
+			UserID:    reply.UserID,
+			CommentID: reply.CommentID,
+			Body:      reply.Body,
+			Username:  reply.User.Username,
+		})
+	}
+
+	return result, nil
+}
+
+func (r *replyServices) UpdateReply(newReply models.Reply, re int, userId int) error {
 	//find reply
-	reply, err := p.IDatabase.GetReplyById(re)
+	reply, err := r.IDatabase.GetReplyById(re)
 	if err != nil {
 		return err
 	}
@@ -58,7 +79,7 @@ func (p *replyServices) UpdateReply(newReply models.Reply, re int, userId int) e
 	reply.Body += newReply.Body
 
 	//update reply
-	err = p.IDatabase.SaveReply(reply)
+	err = r.IDatabase.SaveReply(reply)
 	if err != nil {
 		return err
 	}
@@ -66,9 +87,9 @@ func (p *replyServices) UpdateReply(newReply models.Reply, re int, userId int) e
 	return nil
 }
 
-func (p *replyServices) DeleteReply(re int, userId int) error {
+func (r *replyServices) DeleteReply(re int, userId int) error {
 	//find reply
-	reply, err := p.IDatabase.GetReplyById(re)
+	reply, err := r.IDatabase.GetReplyById(re)
 	if err != nil {
 		return err
 	}
@@ -79,7 +100,7 @@ func (p *replyServices) DeleteReply(re int, userId int) error {
 	}
 
 	//delete reply
-	err = p.IDatabase.DeleteReply(re)
+	err = r.IDatabase.DeleteReply(re)
 	if err != nil {
 		return err
 	}

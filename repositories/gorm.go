@@ -233,6 +233,16 @@ func (db GormSql) SaveNewReply(reply models.Reply) error {
 	return nil
 }
 
+func (db GormSql) GetAllReplyByComment(commentId int) ([]models.Reply, error) {
+	var replys []models.Reply
+	err := db.DB.Where("comment_id = ?", commentId).Preload("User").Find(&replys).Error
+	if err != nil {
+		return []models.Reply{}, err
+	}
+
+	return replys, nil
+}
+
 func (db GormSql) GetReplyById(re int) (models.Reply, error) {
 	var reply models.Reply
 	err := db.DB.Where("id = ?", re).Find(&reply).Error

@@ -53,7 +53,7 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 
 func (h *CommentHandler) GetAllComment(c echo.Context) error {
 
-	//get topic id
+	//get post id
 	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
 	if errAtoi != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{

@@ -53,6 +53,29 @@ func (h *ReplyHandler) CreateReply(c echo.Context) error {
 	})
 }
 
+func (h *ReplyHandler) GetAllReply(c echo.Context) error {
+	//get comment id
+	commentId, errAtoi := strconv.Atoi(c.Param("comment_id"))
+	if errAtoi != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": errAtoi.Error(),
+		})
+	}
+
+	//get all reply from comment
+	replys, err := h.IReplyServices.GetAllReply(commentId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, echo.Map{
+			"message": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Succes",
+		"data":    replys,
+	})
+}
+
 func (h *ReplyHandler) UpdateReply(c echo.Context) error {
 	var newReply models.Reply
 	c.Bind(&newReply)
