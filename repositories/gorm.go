@@ -349,10 +349,19 @@ func (db GormSql) SaveBookmark(bookmark models.Bookmark) error {
 	return nil
 }
 
-func (db GormSql) GetBookmark(userId int, postId int) (models.Bookmark, error) {
+func (db GormSql) GetBookmarkByUserIDAndPostID(userID, postID int) (models.Bookmark, error) {
 	var bookmark models.Bookmark
 
-	err := db.DB.Where("user_id = ?", userId).Where("post_id = ?", postId).First(&bookmark).Error
+	err := db.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&bookmark).Error
+	if err != nil {
+		return models.Bookmark{}, err
+	}
+	return bookmark, nil
+}
+func (db GormSql) GetBookmarkByBookmarkID(bookmarkID int) (models.Bookmark, error) {
+	var bookmark models.Bookmark
+
+	err := db.DB.Where("id = ?", bookmarkID).First(&bookmark).Error
 	if err != nil {
 		return models.Bookmark{}, err
 	}
@@ -361,7 +370,7 @@ func (db GormSql) GetBookmark(userId int, postId int) (models.Bookmark, error) {
 }
 
 func (db GormSql) DeleteBookmark(bookmarkId int) error {
-	err := db.DB.Delete(&models.Bookmark{}, bookmarkId).Error
+	err := db.DB.Unscoped().Delete(&models.Bookmark{}, bookmarkId).Error
 	if err != nil {
 		return err
 	}

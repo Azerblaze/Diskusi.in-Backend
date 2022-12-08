@@ -45,7 +45,7 @@ func (h *BookmarkHandler) DeleteBookmark(c echo.Context) error {
 	}
 
 	//get postId
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postID, errAtoi := strconv.Atoi(c.Param("bookmark_id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

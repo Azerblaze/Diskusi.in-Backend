@@ -50,7 +50,8 @@ type IDatabase interface {
 	GetAllFollowedPost(userId int) ([]models.FollowedPost, error)
 
 	SaveBookmark(bookmark models.Bookmark) error
-	GetBookmark(userId int, postId int) (models.Bookmark, error)
+	GetBookmarkByUserIDAndPostID(userID, postID int) (models.Bookmark, error)
+	GetBookmarkByBookmarkID(bookmarkID int) (models.Bookmark, error)
 	DeleteBookmark(bookmarkId int) error
 	GetAllBookmark(userId int) ([]models.Bookmark, error)
 
