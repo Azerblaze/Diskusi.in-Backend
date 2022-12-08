@@ -20,7 +20,7 @@ type IUserServices interface {
 	Register(user models.User) error
 	Login(user models.User) (dto.Login, error)
 	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
-	GetProfile(token dto.Token) (models.User, error)
+	GetProfile(token dto.Token, user models.User) (models.User, error)
 	UpdateProfile(token dto.Token, user models.User) error
 }
 
@@ -137,7 +137,7 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, er
 	return result, nil
 }
 
-func (s *userServices) GetProfile(token dto.Token) (models.User, error) {
+func (s *userServices) GetProfile(token dto.Token, u models.User) (models.User, error) {
 	user, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
 		if errGetProfile.Error() == "record not found" {
@@ -145,6 +145,12 @@ func (s *userServices) GetProfile(token dto.Token) (models.User, error) {
 		} else {
 			return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
 		}
+	}
+
+	if helper.CheckPasswordHash(u.Password, user.Password) {
+		user.Password = u.Password
+	} else {
+		return models.User{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
 	}
 
 	return user, nil
