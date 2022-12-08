@@ -106,9 +106,10 @@ func (b *bookmarkServices) GetAllBookmark(token dto.Token) ([]dto.PublicBookmark
 				Username: post.User.Username,
 			},
 			Post: dto.BookmarkPost{
-				PostID: bookmark.PostID,
-				Title:  bookmark.Post.Title,
-				Body:   bookmark.Post.Body,
+				PostID:    bookmark.PostID,
+				PostTopic: post.Topic.Name,
+				Title:     bookmark.Post.Title,
+				Body:      bookmark.Post.Body,
 			},
 		})
 	}

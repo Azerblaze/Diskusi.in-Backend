@@ -10,9 +10,10 @@ type PublicBookmark struct {
 	Post BookmarkPost `json:"post" form:"post"`
 }
 type BookmarkPost struct {
-	PostID int    `json:"postId" form:"postId"`
-	Title  string `json:"title" form:"title"`
-	Body   string `json:"body" form:"body"`
+	PostID    int    `json:"postId" form:"postId"`
+	PostTopic string `json:"postTopic" form:"postTopic"`
+	Title     string `json:"title" form:"title"`
+	Body      string `json:"body" form:"body"`
 }
 type BookmarkUser struct {
 	UserID   int    `json:"userId" form:"userId"`
