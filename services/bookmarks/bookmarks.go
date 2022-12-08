@@ -89,19 +89,19 @@ func (b *bookmarkServices) GetAllBookmark(token dto.Token) ([]dto.PublicBookmark
 
 	var result []dto.PublicBookmark
 	for _, bookmark := range bookmarks {
-		post, _ := b.IDatabase.GetPostById(int(bookmark.ID))
+		post, _ := b.IDatabase.GetPostById(int(bookmark.PostID))
 		result = append(result, dto.PublicBookmark{
 			Model: bookmark.Model,
 			User: dto.BookmarkUser{
-				UserID:   bookmark.UserID,
+				UserID:   post.UserID,
 				Photo:    post.User.Photo,
 				Username: post.User.Username,
 			},
 			Post: dto.BookmarkPost{
-				PostID:    bookmark.PostID,
+				PostID:    int(post.ID),
 				PostTopic: post.Topic.Name,
-				Title:     bookmark.Post.Title,
-				Body:      bookmark.Post.Body,
+				Title:     post.Title,
+				Body:      post.Body,
 			},
 		})
 	}
