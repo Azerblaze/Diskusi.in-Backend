@@ -67,6 +67,14 @@ func (db GormSql) UpdateProfile(user models.User) error {
 	}
 	return nil
 }
+func (db GormSql) DeleteUser(userId int) error {
+	err := db.DB.Delete(&models.User{}, userId).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // Topic -------------------------------------------------------------------------------------------------------------------------------------------------
 func (db GormSql) GetAllTopics() ([]models.Topic, error) {

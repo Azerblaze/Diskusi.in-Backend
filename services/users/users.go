@@ -22,6 +22,7 @@ type IUserServices interface {
 	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
 	GetProfile(token dto.Token, user models.User) (models.User, error)
 	UpdateProfile(token dto.Token, user models.User) error
+	DeleteUser(token dto.Token, userId int) error
 }
 
 type userServices struct {
@@ -174,6 +175,25 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 	errUpdateProfile := s.IDatabase.UpdateProfile(oldProfile)
 	if errUpdateProfile != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errUpdateProfile.Error())
+	}
+
+	return nil
+}
+
+func (s *userServices) DeleteUser(token dto.Token, userId int) error {
+	//check user
+	user, err := s.IDatabase.GetUserByUsername(token.Username)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	if !user.IsAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
+	errDeleteUser := s.IDatabase.DeleteUser(userId)
+	if errDeleteUser != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
 	}
 
 	return nil

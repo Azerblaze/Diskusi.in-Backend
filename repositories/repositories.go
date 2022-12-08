@@ -11,6 +11,7 @@ type IDatabase interface {
 	GetUsers(page int) ([]models.User, error)
 	GetProfile(id int) (models.User, error)
 	UpdateProfile(user models.User) error
+	DeleteUser(userId int) error
 
 	GetAllTopics() ([]models.Topic, error)
 	GetTopicByName(topicName string) (models.Topic, error)

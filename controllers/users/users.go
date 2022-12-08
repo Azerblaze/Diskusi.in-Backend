@@ -162,3 +162,24 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 		"message": "Profile Updated",
 	})
 }
+
+func (h *UserHandler) DeleteUser(c echo.Context) error {
+	userID, errAtoi := strconv.Atoi(c.Param("user_id"))
+	if errAtoi != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	err := h.IUserServices.DeleteUser(token, userID)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "User Deleted",
+	})
+}

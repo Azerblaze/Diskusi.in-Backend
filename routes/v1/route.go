@@ -93,6 +93,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	users.GET("", uHandler.GetUsers)
 	users.POST("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.PUT("/profile/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.DELETE("/:user_id", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
 	topics := v1.Group("/topics")
