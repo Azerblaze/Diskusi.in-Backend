@@ -109,12 +109,18 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 }
 
 func (h *UserHandler) GetProfile(c echo.Context) error {
+	var user models.User
+	errBind := c.Bind(&user)
+	if errBind != nil {
+		return errBind
+	}
+
 	token, errDecodeJWT := helper.DecodeJWT(c)
 	if errDecodeJWT != nil {
 		return errDecodeJWT
 	}
 
-	result, err := h.IUserServices.GetProfile(token)
+	result, err := h.IUserServices.GetProfile(token, user)
 	if err != nil {
 		return err
 	}
