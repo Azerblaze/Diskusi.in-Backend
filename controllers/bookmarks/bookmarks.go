@@ -44,14 +44,14 @@ func (h *BookmarkHandler) DeleteBookmark(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	//get postId
-	postID, errAtoi := strconv.Atoi(c.Param("bookmark_id"))
+	//get bookmarkID
+	bookmarkID, errAtoi := strconv.Atoi(c.Param("bookmark_id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
 	//delete bookmark
-	err := h.IBookmarkServices.DeleteBookmark(token, postID)
+	err := h.IBookmarkServices.DeleteBookmark(token, bookmarkID)
 	if err != nil {
 		return err
 	}

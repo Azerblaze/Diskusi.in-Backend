@@ -139,7 +139,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	//endpoint bookmark
 	bookmarks := posts.Group("/bookmarks")
 	bookmarks.POST("/:post_id", bHandler.AddBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	bookmarks.DELETE("/:post_id", bHandler.DeleteBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	bookmarks.DELETE("/:bookmark_id", bHandler.DeleteBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	bookmarks.GET("/all", bHandler.GetAllBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	return e, trace
