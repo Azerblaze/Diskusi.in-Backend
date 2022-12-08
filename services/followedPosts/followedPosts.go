@@ -73,7 +73,7 @@ func (b *followedPostServices) DeleteFollowedPost(token dto.Token, postID int) e
 	followedPost, err := b.IDatabase.GetFollowedPost(int(token.ID), int(post.ID))
 	if err != nil {
 		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Followed post not found")
+			return echo.NewHTTPError(http.StatusNotFound, "You are not following this post")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
