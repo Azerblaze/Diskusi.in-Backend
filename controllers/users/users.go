@@ -208,13 +208,14 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	result, numberOfPage, err := h.IUserServices.GetPostAsAdmin(token, userId, page)
+	user, result, numberOfPage, err := h.IUserServices.GetPostAsAdmin(token, userId, page)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
+		"user":           user,
 		"data":           result,
 		"number_of_page": numberOfPage,
 		"page":           page,

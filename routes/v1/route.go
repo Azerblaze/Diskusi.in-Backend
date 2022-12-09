@@ -91,10 +91,10 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	users.POST("/register", uHandler.Register)
 	users.POST("/login", uHandler.Login)
 	users.GET("", uHandler.GetUsers)
-	users.POST("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.GET("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.PUT("/profile/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.DELETE("/:user_id", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.GET("/:user_id/post", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.GET("/:user_id", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/post", uHandler.GetPostByUserIdAsUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
