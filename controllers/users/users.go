@@ -131,9 +131,6 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 		return err
 	}
 
-	//empty password
-	result.Password = ""
-
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Success",
 		"data":    result,

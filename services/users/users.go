@@ -20,7 +20,7 @@ type IUserServices interface {
 	Register(user models.User) error
 	Login(user models.User) (dto.Login, error)
 	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
-	GetProfile(token dto.Token, user models.User) (models.User, error)
+	GetProfile(token dto.Token, user models.User) (dto.PublicUser, error)
 	UpdateProfile(token dto.Token, user models.User) error
 	DeleteUser(token dto.Token, userId int) error
 	GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error)
@@ -140,17 +140,25 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, er
 	return result, nil
 }
 
-func (s *userServices) GetProfile(token dto.Token, u models.User) (models.User, error) {
+func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
 	user, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
 		if errGetProfile.Error() == "record not found" {
-			return models.User{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
 		} else {
-			return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
+			return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
 		}
 	}
+	result := dto.PublicUser{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+		Photo:    user.Photo,
+		IsAdmin:  user.IsAdmin,
+		BanUntil: user.BanUntil,
+	}
 
-	return user, nil
+	return result, nil
 }
 
 func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
