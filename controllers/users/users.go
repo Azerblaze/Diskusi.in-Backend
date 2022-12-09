@@ -91,10 +91,16 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	if errDecodeJWT != nil {
 		return errDecodeJWT
 	}
-
-	page, errAtoi := strconv.Atoi(c.QueryParam("page"))
-	if errAtoi != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	pageStr := c.QueryParam("page")
+	var page int
+	if pageStr == "" {
+		page = 1
+	} else {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 	}
 
 	result, err := h.IUserServices.GetUsers(token, page)
