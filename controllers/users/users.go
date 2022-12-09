@@ -183,7 +183,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "User Deleted",
+		"message": "User deleted",
 	})
 }
 
