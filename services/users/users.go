@@ -150,12 +150,6 @@ func (s *userServices) GetProfile(token dto.Token, u models.User) (models.User, 
 		}
 	}
 
-	if helper.CheckPasswordHash(u.Password, user.Password) {
-		user.Password = u.Password
-	} else {
-		return models.User{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
-	}
-
 	return user, nil
 }
 
@@ -205,22 +199,22 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	//check user Admin
 	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
-		return models.User{}, []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
 
 	//check user
 	user, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser.Error() == "record not found" {
-			return models.User{}, []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
+			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
-			return models.User{}, []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 		}
 	}
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return models.User{}, []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
 	}
 
 	//cek jika page kosong
@@ -231,7 +225,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	//get post by user id
 	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(userId, page)
 	if errGetPostByUserId != nil {
-		return models.User{}, []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
 
 	//insert data to dto.Public post
@@ -291,7 +285,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	//get post by user id
 	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(int(token.ID), page)
 	if errGetPostByUserId != nil {
-		return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
 
 	//insert data to dto.Public post
