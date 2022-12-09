@@ -175,13 +175,13 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 		}
 	}
 
+	if int(token.ID) != post.UserID {
+		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the post owner")
+	}
+
 	//check if post is active
 	if !post.IsActive {
 		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
-	}
-
-	if int(token.ID) != post.UserID {
-		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the post owner")
 	}
 
 	//update post body
