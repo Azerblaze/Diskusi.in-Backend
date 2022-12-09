@@ -202,6 +202,11 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
 
+	//check if logged user is admin
+	if !userAdmin.IsAdmin {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
 	//check user
 	user, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
@@ -211,11 +216,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 		}
 	}
-
-	//check if logged user is admin
-	if !userAdmin.IsAdmin {
-		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
-	}
+	user.Password = "<secret>"
 
 	//cek jika page kosong
 	if page < 1 {
