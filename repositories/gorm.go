@@ -260,7 +260,7 @@ func (db GormSql) SaveNewComment(comment models.Comment) error {
 func (db GormSql) GetAllCommentByPost(id int) ([]models.Comment, error) {
 	var comments []models.Comment
 
-	err := db.DB.Where("post_id = ?", id).Preload("User").Find(&comments).Error
+	err := db.DB.Where("post_id = ?", id).Order("created_at DESC").Preload("User").Find(&comments).Error
 	if err != nil {
 		return []models.Comment{}, err
 	}
