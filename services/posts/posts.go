@@ -23,6 +23,7 @@ type IPostServices interface {
 	DeletePost(id int, token dto.Token) error
 	GetRecentPost(page int, search string) ([]dto.PublicPost, int, error)
 	GetAllPostByLike(page int, search string) ([]dto.PublicPost, int, error)
+	SuspendPost(token dto.Token, postId int) error
 }
 
 type postServices struct {
@@ -172,6 +173,11 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+	}
+
+	//check if post is active
+	if !post.IsActive {
+		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
 	}
 
 	if int(token.ID) != post.UserID {
@@ -344,4 +350,35 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 	}
 
 	return result, numberOfPage, nil
+}
+
+func (p *postServices) SuspendPost(token dto.Token, postId int) error {
+	//check user
+	user, errGetUserByUsername := p.GetUserByUsername(token.Username)
+	if errGetUserByUsername != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
+	}
+
+	if !user.IsAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
+	//find post
+	post, errGetPostById := p.GetPostById(postId)
+	if errGetPostById != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errGetPostById.Error())
+	}
+
+	if post.IsActive {
+		post.IsActive = false
+	} else {
+		post.IsActive = true
+	}
+
+	err := p.IDatabase.SavePost(post)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }

@@ -35,6 +35,11 @@ func (c *commentServices) CreateComment(comment models.Comment, postID int, toke
 		}
 	}
 
+	//check if post is active
+	if !post.IsActive {
+		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
+	}
+
 	//fill empty comment field
 	comment.UserID = int(token.ID)
 	comment.PostID = int(post.ID)
@@ -84,6 +89,21 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+	}
+
+	//get post
+	post, err := c.IDatabase.GetPostById(comment.PostID)
+	if err != nil {
+		if err.Error() == "record not found" {
+			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	//check if post is active
+	if !post.IsActive {
+		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
 	}
 
 	//check user
