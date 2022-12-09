@@ -7,7 +7,9 @@ import (
 	"discusiin/models"
 	"discusiin/repositories"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -25,6 +27,7 @@ type IUserServices interface {
 	DeleteUser(token dto.Token, userId int) error
 	GetPostAsAdmin(token dto.Token, userId int, page int) ([]dto.PublicPost, int, error)
 	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
+	BanUser(token dto.Token, userId int, user models.User) error
 }
 
 type userServices struct {
@@ -106,6 +109,22 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 	} else {
 		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
 	}
+
+	var ban int
+	//check if user are not banned
+	if data.BanUntil > int(time.Now().UnixMilli()) {
+		banLeft := data.BanUntil - int(time.Now().UnixMilli())
+		ban = banLeft / 86400000
+
+		//jika ban kurang dari 24 jam
+		if ban < 1 {
+			ban = banLeft / 3600
+			return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Ban Left: "+strconv.Itoa(ban)+" Hours")
+		}
+
+		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Ban Left: "+strconv.Itoa(ban)+" Days")
+	}
+
 	return result, nil
 }
 func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, error) {
@@ -340,4 +359,42 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	}
 
 	return result, numberOfPage, nil
+}
+
+func (s *userServices) BanUser(token dto.Token, userId int, user models.User) error {
+	//check user admin
+	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	if errUserAdmin != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+	}
+
+	//check if logged user is admin
+	if !userAdmin.IsAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
+	//check if user exist
+	oldUser, errUser := s.IDatabase.GetUserById(userId)
+	if errUser != nil {
+		if errUser.Error() == "record not found" {
+			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+		}
+	}
+
+	//user variabel ban to store how long ban wil last
+	ban := user.BanUntil
+	// banUntil := time.Now()
+	// banUntil.Add(time.Hour * 24 * time.Duration(ban))
+	user.BanUntil = int(time.Now().UnixMilli()) + (86400000 * ban)
+
+	//update user
+	oldUser.BanUntil = user.BanUntil
+	err := s.IDatabase.UpdateProfile(oldUser)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	return nil
 }

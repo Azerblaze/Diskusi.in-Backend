@@ -96,6 +96,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	users.DELETE("/:user_id", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/:user_id/post", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/post", uHandler.GetPostByUserIdAsUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.PUT("/:user_id/ban", uHandler.BanUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
 	topics := v1.Group("/topics")
