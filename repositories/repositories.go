@@ -8,6 +8,7 @@ type IDatabase interface {
 	SaveNewUser(models.User) error
 	GetUserByUsername(username string) (models.User, error)
 	GetUserByEmail(email string) (models.User, error)
+	GetUserById(userId int) (models.User, error)
 	GetUsers(page int) ([]models.User, error)
 	GetProfile(id int) (models.User, error)
 	UpdateProfile(user models.User) error
@@ -24,6 +25,7 @@ type IDatabase interface {
 	GetAllPostByTopic(topidID int, page int, search string) ([]models.Post, error)
 	GetPostById(postID int) (models.Post, error)
 	GetRecentPost(page int, search string) ([]models.Post, error)
+	GetPostByUserId(userId int, page int) ([]models.Post, error)
 	// GetAllPostByLike(page int, search string) ([]models.Post, error)
 	SavePost(post models.Post) error
 	DeletePost(postID int) error
@@ -61,4 +63,5 @@ type IDatabase interface {
 	CountPostDislike(postID int) (int, error)
 	CountAllPost() (int, error)
 	CountPostByTopicID(topicId int) (int, error)
+	CountPostByUserID(userId int) (int, error)
 }

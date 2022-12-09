@@ -44,6 +44,16 @@ func (db GormSql) GetUserByEmail(email string) (models.User, error) {
 	}
 	return user, nil
 }
+func (db GormSql) GetUserById(userId int) (models.User, error) {
+	var user models.User
+	err := db.DB.
+		Where("id = ?", userId).
+		First(&user).Error
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
+}
 func (db GormSql) GetUsers(page int) ([]models.User, error) {
 	var users []models.User
 	err := db.DB.Order("username ASC").Offset((page - 1) * 20).Limit(20).Find(&users).Error
@@ -188,6 +198,24 @@ func (db GormSql) GetPostById(id int) (models.Post, error) {
 	}
 
 	return post, nil
+}
+
+func (db GormSql) GetPostByUserId(userId int, page int) ([]models.Post, error) {
+	var posts []models.Post
+
+	//find topic id
+	err := db.DB.Where("user_id = ?", userId).
+		Order("created_at DESC").
+		Preload("User").
+		Preload("Topic").
+		Offset((page - 1) * 20).
+		Limit(20).
+		Find(&posts).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 func (db GormSql) SavePost(post models.Post) error {
@@ -478,6 +506,16 @@ func (db GormSql) CountPostByTopicID(topicId int) (int, error) {
 	var postCount int64
 
 	err := db.DB.Table("posts").Where("topic_id = ?", topicId).Count(&postCount).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int(postCount), nil
+}
+func (db GormSql) CountPostByUserID(userId int) (int, error) {
+	var postCount int64
+
+	err := db.DB.Table("posts").Where("user_id = ?", userId).Count(&postCount).Error
 	if err != nil {
 		return 0, err
 	}

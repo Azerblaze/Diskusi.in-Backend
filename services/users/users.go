@@ -23,6 +23,8 @@ type IUserServices interface {
 	GetProfile(token dto.Token, user models.User) (models.User, error)
 	UpdateProfile(token dto.Token, user models.User) error
 	DeleteUser(token dto.Token, userId int) error
+	GetPostAsAdmin(token dto.Token, userId int, page int) ([]dto.PublicPost, int, error)
+	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
 }
 
 type userServices struct {
@@ -197,4 +199,145 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	}
 
 	return nil
+}
+
+func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) ([]dto.PublicPost, int, error) {
+	//check user Admin
+	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	if errUserAdmin != nil {
+		return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+	}
+
+	//check user
+	_, errUser := s.IDatabase.GetUserById(userId)
+	if errUser != nil {
+		if errUser.Error() == "record not found" {
+			return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
+		} else {
+			return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+		}
+	}
+
+	//check if logged user is admin
+	if !userAdmin.IsAdmin {
+		return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
+	//cek jika page kosong
+	if page < 1 {
+		page = 1
+	}
+
+	//get post by user id
+	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(userId, page)
+	if errGetPostByUserId != nil {
+		return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
+	}
+
+	//insert data to dto.Public post
+	var result []dto.PublicPost
+	for _, post := range posts {
+		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
+		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+
+		result = append(result, dto.PublicPost{
+			Model:     post.Model,
+			Title:     post.Title,
+			Photo:     post.Photo,
+			Body:      post.Body,
+			CreatedAt: post.CreatedAt,
+			IsActive:  post.IsActive,
+			User: dto.PostUser{
+				UserID:   post.UserID,
+				Photo:    post.User.Photo,
+				Username: post.User.Username,
+			},
+			Topic: dto.PostTopic{
+				TopicID:   post.TopicID,
+				TopicName: post.Topic.Name,
+			},
+			Count: dto.PostCount{
+				LikeCount:    likeCount,
+				CommentCount: commentCount,
+				DislikeCount: dislikeCount,
+			},
+		})
+	}
+
+	//count page number
+	numberOfPost, errPage := s.IDatabase.CountPostByUserID(userId)
+	if errPage != nil {
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
+	}
+
+	//count number of page
+	var numberOfPage int
+	if numberOfPost%20 == 0 {
+		numberOfPage = (numberOfPost / 20)
+	} else {
+		numberOfPage = (numberOfPost / 20) + 1
+	}
+
+	return result, numberOfPage, nil
+}
+
+func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error) {
+	//cek jika page kosong
+	if page < 1 {
+		page = 1
+	}
+
+	//get post by user id
+	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(int(token.ID), page)
+	if errGetPostByUserId != nil {
+		return []dto.PublicPost{}, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
+	}
+
+	//insert data to dto.Public post
+	var result []dto.PublicPost
+	for _, post := range posts {
+		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
+		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+
+		result = append(result, dto.PublicPost{
+			Model:     post.Model,
+			Title:     post.Title,
+			Photo:     post.Photo,
+			Body:      post.Body,
+			CreatedAt: post.CreatedAt,
+			IsActive:  post.IsActive,
+			User: dto.PostUser{
+				UserID:   post.UserID,
+				Photo:    post.User.Photo,
+				Username: post.User.Username,
+			},
+			Topic: dto.PostTopic{
+				TopicID:   post.TopicID,
+				TopicName: post.Topic.Name,
+			},
+			Count: dto.PostCount{
+				LikeCount:    likeCount,
+				CommentCount: commentCount,
+				DislikeCount: dislikeCount,
+			},
+		})
+	}
+
+	//count page number
+	numberOfPost, errPage := s.IDatabase.CountPostByUserID(int(token.ID))
+	if errPage != nil {
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
+	}
+
+	//count number of page
+	var numberOfPage int
+	if numberOfPost%20 == 0 {
+		numberOfPage = (numberOfPost / 20)
+	} else {
+		numberOfPage = (numberOfPost / 20) + 1
+	}
+
+	return result, numberOfPage, nil
 }
