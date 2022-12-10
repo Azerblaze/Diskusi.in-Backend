@@ -256,3 +256,36 @@ func (h *UserHandler) GetPostByUserIdAsUser(c echo.Context) error {
 		"page":           page,
 	})
 }
+
+func (h *UserHandler) BanUser(c echo.Context) error {
+	var user models.User
+
+	//bind
+	errBind := c.Bind(&user)
+	if errBind != nil {
+		return errBind
+	}
+
+	//get user id from param
+	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	if errAtoi != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	//get token from logged user
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	//ban user
+	err := h.IUserServices.BanUser(token, userId, user)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Success",
+		// "data":    result,
+	})
+}

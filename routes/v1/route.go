@@ -95,6 +95,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	users.POST("/register", uHandler.Register)
 	users.POST("/login", uHandler.Login)
 	users.PUT("/profile/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+  users.PUT("/:user_id/ban", uHandler.BanUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.DELETE("/:user_id", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
