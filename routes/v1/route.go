@@ -88,39 +88,39 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints users
 	users := v1.Group("/users")
+	users.GET("", uHandler.GetUsers)
+	users.GET("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.GET("/:user_id", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	users.GET("/post", uHandler.GetPostByUserIdAsUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.POST("/register", uHandler.Register)
 	users.POST("/login", uHandler.Login)
-	users.GET("", uHandler.GetUsers)
-	users.POST("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.PUT("/profile/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+  users.PUT("/:user_id/ban", uHandler.BanUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.DELETE("/:user_id", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.GET("/:user_id/post", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.GET("/post", uHandler.GetPostByUserIdAsUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.PUT("/:user_id/ban", uHandler.BanUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
 	topics := v1.Group("/topics")
-	topics.POST("/create", tHandler.CreateNewTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	topics.PUT("/edit_description/:topic_id", tHandler.UpdateTopicDescription, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.GET("", tHandler.GetAllTopics)
 	topics.GET("/:topic_id", tHandler.GetTopic)
+	topics.POST("/create", tHandler.CreateNewTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	topics.PUT("/edit_description/:topic_id", tHandler.UpdateTopicDescription, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.DELETE("/delete/:topic_id", tHandler.DeleteTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints posts
 	posts := v1.Group("/posts")
-	posts.POST("/create/:topic_name", pHandler.CreateNewPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.GET("/all/:topic_name", pHandler.GetAllPost)
 	posts.GET("/recents", pHandler.GetRecentPost)
 	posts.GET("/recents/top", pHandler.GetAllPostByLike)
 	posts.GET("/:post_id", pHandler.GetPost)
+	posts.POST("/create/:topic_name", pHandler.CreateNewPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/edit/:post_id", pHandler.EditPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.DELETE("/delete/:post_id", pHandler.DeletePost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoint followedPost
 	followedPosts := posts.Group("/followed-posts")
+	followedPosts.GET("/all", fHandler.GetAllFollowedPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	followedPosts.POST("/:post_id", fHandler.AddFollowedPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	followedPosts.DELETE("/:post_id", fHandler.DeleteFollowedPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	followedPosts.GET("/all", fHandler.GetAllFollowedPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints comments
 	comments := posts.Group("/comments")
@@ -142,9 +142,9 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoint bookmark
 	bookmarks := posts.Group("/bookmarks")
+	bookmarks.GET("/all", bHandler.GetAllBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	bookmarks.POST("/:post_id", bHandler.AddBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	bookmarks.DELETE("/:bookmark_id", bHandler.DeleteBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	bookmarks.GET("/all", bHandler.GetAllBookmark, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	return e, trace
 }

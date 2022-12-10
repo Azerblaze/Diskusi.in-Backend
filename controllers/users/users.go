@@ -91,10 +91,16 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 	if errDecodeJWT != nil {
 		return errDecodeJWT
 	}
-
-	page, errAtoi := strconv.Atoi(c.QueryParam("page"))
-	if errAtoi != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	pageStr := c.QueryParam("page")
+	var page int
+	if pageStr == "" {
+		page = 1
+	} else {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 	}
 
 	result, err := h.IUserServices.GetUsers(token, page)
@@ -124,9 +130,6 @@ func (h *UserHandler) GetProfile(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-
-	//empty password
-	result.Password = ""
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Success",
@@ -180,7 +183,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "User Deleted",
+		"message": "User deleted",
 	})
 }
 
@@ -208,13 +211,14 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	result, numberOfPage, err := h.IUserServices.GetPostAsAdmin(token, userId, page)
+	user, result, numberOfPage, err := h.IUserServices.GetPostAsAdmin(token, userId, page)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
+		"user":           user,
 		"data":           result,
 		"number_of_page": numberOfPage,
 		"page":           page,
