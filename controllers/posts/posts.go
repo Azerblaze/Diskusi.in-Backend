@@ -221,3 +221,25 @@ func (h *PostHandler) GetAllPostByLike(c echo.Context) error {
 		"page":           page,
 	})
 }
+
+func (h *PostHandler) SuspendPost(c echo.Context) error {
+	//check if page exist
+	postId, errAtoi := strconv.Atoi(c.Param("post_id"))
+	if errAtoi != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	err := h.IPostServices.SuspendPost(token, postId)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Success",
+	})
+}
