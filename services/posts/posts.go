@@ -176,12 +176,12 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 	}
 
 	if int(token.ID) != post.UserID {
-		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the post owner")
+		return echo.NewHTTPError(http.StatusForbidden, "You are not the post owner")
 	}
 
 	//check if post is active
 	if !post.IsActive {
-		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "Post is suspended, All activity stopped")
 	}
 
 	//update post body
@@ -215,7 +215,7 @@ func (p *postServices) DeletePost(id int, token dto.Token) error {
 
 	if !user.IsAdmin {
 		if int(token.ID) != post.UserID {
-			return echo.NewHTTPError(http.StatusUnauthorized, "You are not the post owner")
+			return echo.NewHTTPError(http.StatusForbidden, "You are not the post owner")
 		}
 	}
 
@@ -360,7 +360,7 @@ func (p *postServices) SuspendPost(token dto.Token, postId int) error {
 	}
 
 	if !user.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//find post

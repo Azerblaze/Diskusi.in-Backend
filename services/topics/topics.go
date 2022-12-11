@@ -51,7 +51,7 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 		}
 	}
 	if !user.IsAdmin {
-		return models.Topic{}, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return models.Topic{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	var result models.Topic
@@ -100,7 +100,7 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 		}
 	}
 	if !user.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "admin access only")
 	}
 
 	err := t.IDatabase.SaveTopic(topic)
@@ -135,7 +135,7 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 		}
 	}
 	if !user.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	topic, errGetTopicByID := t.IDatabase.GetTopicByID(int(newTopic.ID))

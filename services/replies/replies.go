@@ -88,7 +88,7 @@ func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dt
 
 	//check if user are correct
 	if reply.UserID != int(token.ID) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the reply owner")
+		return echo.NewHTTPError(http.StatusForbidden, "You are not the reply owner")
 	}
 
 	//update reply field
@@ -117,7 +117,7 @@ func (r *replyServices) DeleteReply(replyId int, token dto.Token) error {
 
 	//check if user are correct
 	if reply.UserID != int(token.ID) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the reply owner")
+		return echo.NewHTTPError(http.StatusForbidden, "You are not the reply owner")
 	}
 
 	//delete reply

@@ -68,7 +68,7 @@ func (s *userServices) Register(user models.User) error {
 	}
 	//check if user registered as admin
 	if user.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 	if !emailTaken {
 		hashedPWD, errHashPassword := helper.HashPassword(user.Password)
@@ -95,7 +95,7 @@ func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 
 	//check if user are admin
 	if !userAdmin.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	var (
@@ -202,7 +202,7 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, er
 	}
 
 	if !u.IsAdmin {
-		return nil, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return nil, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 	users, err := s.IDatabase.GetUsers(page)
 	if err != nil {
@@ -275,7 +275,7 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	}
 
 	if !user.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	errDeleteUser := s.IDatabase.DeleteUser(userId)
@@ -295,7 +295,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//check user
@@ -437,7 +437,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) er
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//check if user exist
@@ -452,9 +452,8 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) er
 
 	//user variabel ban to store how long ban wil last
 	ban := user.BanUntil
-	// banUntil := time.Now()
-	// banUntil.Add(time.Hour * 24 * time.Duration(ban))
-	user.BanUntil = int(time.Now().UnixMilli()) + (86400000 * ban)
+	const DAY_IN_UNIX_MILLISECOND = 86400000
+	user.BanUntil = int(time.Now().UnixMilli()) + (DAY_IN_UNIX_MILLISECOND * ban)
 
 	//update user
 	oldUser.BanUntil = user.BanUntil

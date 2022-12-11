@@ -37,7 +37,7 @@ func (c *commentServices) CreateComment(comment models.Comment, postID int, toke
 
 	//check if post is active
 	if !post.IsActive {
-		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "Post is suspended, All activity stopped")
 	}
 
 	//fill empty comment field
@@ -103,12 +103,12 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 
 	//check if post is active
 	if !post.IsActive {
-		return echo.NewHTTPError(http.StatusBadRequest, "Post is suspended, All activity stopped")
+		return echo.NewHTTPError(http.StatusServiceUnavailable, "Post is suspended, All activity stopped")
 	}
 
 	//check user
 	if comment.UserID != int(token.ID) {
-		return echo.NewHTTPError(http.StatusUnauthorized, "You are not the comment owner")
+		return echo.NewHTTPError(http.StatusForbidden, "You are not the comment owner")
 	}
 
 	//update comment field
@@ -147,7 +147,7 @@ func (c *commentServices) DeleteComment(commentID int, token dto.Token) error {
 	//check user
 	if !user.IsAdmin {
 		if comment.UserID != int(token.ID) {
-			return echo.NewHTTPError(http.StatusUnauthorized, "You are not the comment owner")
+			return echo.NewHTTPError(http.StatusForbidden, "You are not the comment owner")
 		}
 	}
 
