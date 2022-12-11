@@ -20,6 +20,7 @@ func NewUserServices(db repositories.IDatabase) IUserServices {
 
 type IUserServices interface {
 	Register(user models.User) error
+	RegisterAdmin(user models.User, token dto.Token) error
 	Login(user models.User) (dto.Login, error)
 	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
 	GetProfile(token dto.Token, user models.User) (dto.PublicUser, error)
@@ -65,6 +66,10 @@ func (s *userServices) Register(user models.User) error {
 			return echo.NewHTTPError(http.StatusConflict, "Email has been used in another account")
 		}
 	}
+	//check if user registered as admin
+	if user.IsAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
 	if !emailTaken {
 		hashedPWD, errHashPassword := helper.HashPassword(user.Password)
 		if errHashPassword != nil {
@@ -77,6 +82,65 @@ func (s *userServices) Register(user models.User) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
+
+	return nil
+}
+
+func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
+	//check user
+	userAdmin, errGetUser := s.IDatabase.GetUserByUsername(token.Username)
+	if errGetUser != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
+	}
+
+	//check if user are admin
+	if !userAdmin.IsAdmin {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Admin access only")
+	}
+
+	var (
+		client        models.User
+		usernameTaken = true
+		emailTaken    = true
+	)
+
+	client.Username = strings.ToLower(user.Username)
+	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
+	if errCheckUsername != nil {
+		if errCheckUsername.Error() == "record not found" {
+			usernameTaken = false
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, errCheckUsername.Error())
+		}
+	} else {
+		return echo.NewHTTPError(http.StatusConflict, "Username has been taken")
+	}
+	if !usernameTaken {
+		client.Email = strings.ToLower(user.Email)
+		_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
+		if errCheckEmail != nil {
+			if errCheckEmail.Error() == "record not found" {
+				emailTaken = false
+			} else {
+				return echo.NewHTTPError(http.StatusInternalServerError, errCheckEmail.Error())
+			}
+		} else {
+			return echo.NewHTTPError(http.StatusConflict, "Email has been used in another account")
+		}
+	}
+	if !emailTaken {
+		hashedPWD, errHashPassword := helper.HashPassword(user.Password)
+		if errHashPassword != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, errHashPassword.Error())
+		}
+		client.Password = hashedPWD
+		client.IsAdmin = user.IsAdmin
+		err := s.IDatabase.SaveNewUser(client)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
 	return nil
 }
 func (s *userServices) Login(user models.User) (dto.Login, error) {

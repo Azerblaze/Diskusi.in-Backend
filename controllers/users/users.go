@@ -55,6 +55,52 @@ func (h *UserHandler) Register(c echo.Context) error {
 	})
 }
 
+func (h *UserHandler) RegisterAdmin(c echo.Context) error {
+	// validation
+	var u models.User
+
+	errBind := c.Bind(&u)
+	if errBind != nil {
+		return errBind
+	}
+
+	// isEmailKosong?
+	if u.Email == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "email should not be empty")
+	}
+	// isEmailValid?
+	valid := helper.IsEmailValid(u.Email)
+	if !valid {
+		return echo.NewHTTPError(http.StatusBadRequest, "email invalid")
+	}
+	// isUsernameKosong?
+	if u.Username == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "username should not be empty")
+	}
+	// isPasswordKosong?
+	if u.Password == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "password should not be empty")
+	}
+	// isPasswordLessThan8?
+	if len(u.Password) < 8 {
+		return echo.NewHTTPError(http.StatusBadRequest, "password should not lower than 8")
+	}
+
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	err := h.IUserServices.RegisterAdmin(u, token)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, map[string]interface{}{
+		"message": "Created",
+	})
+}
+
 func (h *UserHandler) Login(c echo.Context) error {
 
 	var u models.User
