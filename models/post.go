@@ -14,9 +14,9 @@ type Post struct {
 	CreatedAt int    `json:"createdAt" form:"createdAt"`
 	IsActive  bool   `json:"isActive" form:"isActive"`
 
-	Comments []Comment
-	User     User  `json:"user"`
-	Topic    Topic `json:"topic"`
+	Comments []Comment `json:"comments"`
+	User     User      `json:"user"`
+	Topic    Topic     `json:"topic"`
 }
 
 func (Post) TableName() string {

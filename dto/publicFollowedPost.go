@@ -11,7 +11,7 @@ type PublicFollowedPost struct {
 }
 type FollowedPost struct {
 	PostID    int    `json:"postId" form:"postId"`
-	TopicName string `json:"topic_name" form:"topic_name"`
+	TopicName string `json:"postTopic" form:"postTopic"`
 	Title     string `json:"title" form:"title"`
 	Body      string `json:"body" form:"body"`
 }
