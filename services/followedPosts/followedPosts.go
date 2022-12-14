@@ -4,6 +4,7 @@ import (
 	"discusiin/dto"
 	"discusiin/models"
 	"discusiin/repositories"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -111,6 +112,6 @@ func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.Public
 			},
 		})
 	}
-
+	log.Println("success get all followed posts")
 	return result, nil
 }
