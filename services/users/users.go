@@ -171,7 +171,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 			Token:    token,
 		}
 	} else {
-		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
+		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Username or Password incorrect")
 	}
 
 	var ban int
