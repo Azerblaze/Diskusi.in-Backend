@@ -38,6 +38,11 @@ func (h *TopicHandler) CreateNewTopic(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "description name should not be empty")
 	}
 
+	// is description to short
+	if len(topic.Description) < 25 {
+		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least cpntain 25 character")
+	}
+
 	result, err := h.ITopicServices.CreateTopic(topic, token)
 	if err != nil {
 		return err
@@ -104,6 +109,16 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 	id, errAtoi := strconv.Atoi(idStr)
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	//is description empty
+	if newTopic.Description == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "description name should not be empty")
+	}
+
+	// is description to short
+	if len(newTopic.Description) < 25 {
+		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least cpntain 25 character")
 	}
 
 	newTopic.ID = uint(id)
