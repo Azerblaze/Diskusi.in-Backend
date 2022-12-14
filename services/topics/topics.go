@@ -112,13 +112,18 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 }
 
 func (t *topicServices) RemoveTopic(id int) error {
-	err := t.IDatabase.RemoveTopic(id)
-	if err != nil {
-		if err.Error() == "record not found" {
+	topic, errGetTopic := t.IDatabase.GetTopicByID(id)
+	if errGetTopic != nil {
+		if errGetTopic.Error() == "record not found" {
 			return echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			return echo.NewHTTPError(http.StatusInternalServerError, errGetTopic.Error())
 		}
+	}
+
+	err := t.IDatabase.RemoveTopic(int(topic.ID))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	return nil
