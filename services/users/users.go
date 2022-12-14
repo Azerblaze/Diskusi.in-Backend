@@ -148,7 +148,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 	data, err := s.IDatabase.GetUserByEmail(user.Email)
 	if err != nil {
 		if err.Error() == "record not found" {
-			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "No account using this email")
+			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "Email or Password incorrect")
 		}
 		return dto.Login{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -171,7 +171,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 			Token:    token,
 		}
 	} else {
-		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Username or Password incorrect")
+		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Email or Password incorrect")
 	}
 
 	var ban int
