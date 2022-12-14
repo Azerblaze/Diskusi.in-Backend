@@ -10,11 +10,13 @@ type PublicFollowedPost struct {
 	Post FollowedPost     `json:"post" form:"post"`
 }
 type FollowedPost struct {
-	PostID int    `json:"postId" form:"postId"`
-	Title  string `json:"title" form:"title"`
-	Body   string `json:"body" form:"body"`
+	PostID    int    `json:"postId" form:"postId"`
+	TopicName string `json:"topic_name" form:"topic_name"`
+	Title     string `json:"title" form:"title"`
+	Body      string `json:"body" form:"body"`
 }
 type FollowedPostUser struct {
 	UserID   int    `json:"userId" form:"userId"`
+	Photo    string `json:"photo" form:"photo"`
 	Username string `json:"username" form:"username"`
 }

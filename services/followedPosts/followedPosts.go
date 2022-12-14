@@ -99,16 +99,20 @@ func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.Public
 	var result []dto.PublicFollowedPost
 	for _, followedPost := range followedPosts {
 		post, _ := b.IDatabase.GetPostById(int(followedPost.ID))
+		user, _ := b.IDatabase.GetUserById(post.UserID)
+		topic, _ := b.IDatabase.GetTopicByID(post.TopicID)
 		result = append(result, dto.PublicFollowedPost{
 			Model: followedPost.Model,
 			User: dto.FollowedPostUser{
-				UserID:   followedPost.UserID,
-				Username: post.User.Username,
+				UserID:   post.UserID,
+				Username: user.Username,
+				Photo:    user.Photo,
 			},
 			Post: dto.FollowedPost{
-				PostID: followedPost.PostID,
-				Title:  followedPost.Post.Title,
-				Body:   followedPost.Post.Body,
+				PostID:    followedPost.PostID,
+				TopicName: topic.Name,
+				Title:     followedPost.Post.Title,
+				Body:      followedPost.Post.Body,
 			},
 		})
 	}
