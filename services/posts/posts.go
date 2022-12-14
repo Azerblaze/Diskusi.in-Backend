@@ -364,9 +364,13 @@ func (p *postServices) SuspendPost(token dto.Token, postId int) error {
 	}
 
 	//find post
-	post, errGetPostById := p.GetPostById(postId)
+	post, errGetPostById := p.IDatabase.GetPostById(postId)
 	if errGetPostById != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errGetPostById.Error())
+		if errGetPostById.Error() == "record not found" {
+			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, errGetPostById.Error())
+		}
 	}
 
 	if post.IsActive {
