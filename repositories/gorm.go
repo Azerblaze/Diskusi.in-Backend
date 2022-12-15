@@ -279,6 +279,23 @@ func (db GormSql) GetCommentById(co int) (models.Comment, error) {
 	return comment, nil
 }
 
+func (db GormSql) GetCommentByUserId(userId int, page int) ([]models.Comment, error) {
+	var comments []models.Comment
+
+	//find topic id
+	err := db.DB.Where("user_id = ?", userId).
+		Order("created_at DESC").
+		Preload("Post").
+		Offset((page - 1) * 30).
+		Limit(30).
+		Find(&comments).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return comments, nil
+}
+
 func (db GormSql) SaveComment(comment models.Comment) error {
 	err := db.DB.Save(&comment).Error
 	if err != nil {
@@ -521,4 +538,15 @@ func (db GormSql) CountPostByUserID(userId int) (int, error) {
 	}
 
 	return int(postCount), nil
+}
+
+func (db GormSql) CountCommentByUserID(userId int) (int, error) {
+	var commentCount int64
+
+	err := db.DB.Table("comments").Where("user_id = ?", userId).Count(&commentCount).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int(commentCount), nil
 }
