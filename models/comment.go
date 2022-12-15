@@ -12,7 +12,7 @@ type Comment struct {
 	IsFollowed bool   `json:"isFollowed" form:"isFollowed"`
 
 	User User
-	// Post Post
+	Post Post
 }
 
 func (Comment) TableName() string {

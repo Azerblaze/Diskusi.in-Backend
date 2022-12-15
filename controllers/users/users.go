@@ -273,6 +273,44 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 	})
 }
 
+func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
+	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	if errAtoi != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	//check if page exist
+	pageStr := c.QueryParam("page")
+	var page int
+	if pageStr == "" {
+		page = 1
+	} else {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+	}
+
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	user, result, numberOfPage, err := h.IUserServices.GetCommentAsAdmin(token, userId, page)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":        "Success",
+		"user":           user,
+		"data":           result,
+		"number_of_page": numberOfPage,
+		"page":           page,
+	})
+}
+
 func (h *UserHandler) GetPostByUserIdAsUser(c echo.Context) error {
 	//check if page exist
 	pageStr := c.QueryParam("page")

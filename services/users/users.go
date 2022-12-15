@@ -27,6 +27,7 @@ type IUserServices interface {
 	UpdateProfile(token dto.Token, user models.User) error
 	DeleteUser(token dto.Token, userId int) error
 	GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error)
+	GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error)
 	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
 	BanUser(token dto.Token, userId int, user models.User) error
 }
@@ -148,7 +149,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 	data, err := s.IDatabase.GetUserByEmail(user.Email)
 	if err != nil {
 		if err.Error() == "record not found" {
-			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "No account using this email")
+			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "Email or Password incorrect")
 		}
 		return dto.Login{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -171,7 +172,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 			Token:    token,
 		}
 	} else {
-		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
+		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Email or Password incorrect")
 	}
 
 	var ban int
@@ -292,6 +293,71 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	}
 
 	return nil
+}
+
+func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error) {
+	//check user Admin
+	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	if errUserAdmin != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+	}
+
+	//check if logged user is admin
+	if !userAdmin.IsAdmin {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+	}
+
+	//check user
+	user, errUser := s.IDatabase.GetUserById(userId)
+	if errUser != nil {
+		if errUser.Error() == "record not found" {
+			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
+		} else {
+			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+		}
+	}
+	user.Password = "<secret>"
+
+	//cek jika page kosong
+	if page < 1 {
+		page = 1
+	}
+
+	//get comment by user id
+	comments, errGetCommentByUserId := s.IDatabase.GetCommentByUserId(userId, page)
+	if errGetCommentByUserId != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetCommentByUserId.Error())
+	}
+
+	//insert data to dto.Public Comment
+	var result []dto.AdminComment
+	for _, comment := range comments {
+		result = append(result, dto.AdminComment{
+			Model: comment.Model,
+			Body:  comment.Body,
+			Post: dto.CommentPost{
+				PostID: comment.PostID,
+				Title:  comment.Post.Title,
+				Body:   comment.Post.Body,
+			},
+		})
+	}
+
+	//count page number
+	numberOfPost, errPage := s.IDatabase.CountCommentByUserID(userId)
+	if errPage != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
+	}
+
+	//count number of page
+	var numberOfPage int
+	if numberOfPost%30 == 0 {
+		numberOfPage = (numberOfPost / 30)
+	} else {
+		numberOfPage = (numberOfPost / 30) + 1
+	}
+
+	return user, result, numberOfPage, nil
 }
 
 func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error) {
