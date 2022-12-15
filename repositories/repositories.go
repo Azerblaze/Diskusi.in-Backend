@@ -26,7 +26,7 @@ type IDatabase interface {
 	GetPostById(postID int) (models.Post, error)
 	GetRecentPost(page int, search string) ([]models.Post, error)
 	GetPostByUserId(userId int, page int) ([]models.Post, error)
-	// GetAllPostByLike(page int, search string) ([]models.Post, error)
+	GetAllPostByLike(page int) ([]models.Post, error)
 	SavePost(post models.Post) error
 	DeletePost(postID int) error
 	GetPostByIdWithAll(postID int) (models.Post, error)
@@ -66,4 +66,5 @@ type IDatabase interface {
 	CountPostByTopicID(topicId int) (int, error)
 	CountPostByUserID(userId int) (int, error)
 	CountCommentByUserID(userId int) (int, error)
+	CountUsers() (int, error)
 }

@@ -218,6 +218,18 @@ func (db GormSql) GetPostByUserId(userId int, page int) ([]models.Post, error) {
 	return posts, nil
 }
 
+func (db GormSql) GetAllPostByLike(page int) ([]models.Post, error) {
+	var posts []models.Post
+
+	//find topic with like
+	err := db.DB.Order("like_count DESC").Preload("User").Preload("Topic").Offset((page - 1) * 20).Limit(20).Find(&posts).Error
+	if err != nil {
+		return []models.Post{}, err
+	}
+
+	return posts, nil
+}
+
 func (db GormSql) SavePost(post models.Post) error {
 	err := db.DB.Save(&post).Error
 
@@ -549,4 +561,13 @@ func (db GormSql) CountCommentByUserID(userId int) (int, error) {
 	}
 
 	return int(commentCount), nil
+}
+func (db GormSql) CountUsers() (int, error) {
+	var userCount int64
+
+	err := db.DB.Table("users").Where("is_admin = 0").Count(&userCount).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(userCount), nil
 }

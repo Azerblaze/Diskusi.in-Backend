@@ -22,7 +22,7 @@ type IUserServices interface {
 	Register(user models.User) error
 	RegisterAdmin(user models.User, token dto.Token) error
 	Login(user models.User) (dto.Login, error)
-	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
+	GetUsers(token dto.Token, page int) ([]dto.PublicUser, int, error)
 	GetProfile(token dto.Token, user models.User) (dto.PublicUser, error)
 	UpdateProfile(token dto.Token, user models.User) error
 	DeleteUser(token dto.Token, userId int) error
@@ -192,22 +192,22 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 
 	return result, nil
 }
-func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, error) {
+func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, int, error) {
 	u, errGetUserByUsername := s.IDatabase.GetUserByUsername(token.Username)
 	if errGetUserByUsername != nil {
 		if errGetUserByUsername.Error() == "record not found" {
-			return nil, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
 		} else {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
+			return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
 		}
 	}
 
 	if !u.IsAdmin {
-		return nil, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 	users, err := s.IDatabase.GetUsers(page)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicUser
@@ -221,7 +221,15 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, er
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	return result, nil
+	countUser, _ := s.IDatabase.CountUsers()
+	var numberOfPage int
+	if countUser%20 == 0 {
+		numberOfPage = countUser / 20
+	} else {
+		numberOfPage = countUser/20 + 1
+	}
+
+	return result, numberOfPage, nil
 }
 
 func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
@@ -273,6 +281,9 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	user, err := s.IDatabase.GetUserByUsername(token.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if user.DeletedAt.Time.String() != "" {
+		return echo.NewHTTPError(http.StatusNotFound, "User Not Found or Deleted")
 	}
 
 	if !user.IsAdmin {
