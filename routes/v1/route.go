@@ -6,6 +6,7 @@ import (
 	"discusiin/configs"
 	"discusiin/controllers/bookmarks"
 	"discusiin/controllers/comments"
+	"discusiin/controllers/dashboard"
 	"discusiin/controllers/followedPosts"
 	"discusiin/controllers/likes"
 	"discusiin/controllers/posts"
@@ -52,6 +53,10 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	trace := jaegertracing.New(e, nil)
 
+	dHandler := dashboard.DashboardHandler{
+		IDashboardServices: payload.GetDashboardServices(),
+	}
+
 	uHandler := users.UserHandler{
 		IUserServices: payload.GetUserServices(),
 	}
@@ -85,6 +90,8 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	api := e.Group("/api")
 	v1 := api.Group("/v1")
+
+	v1.GET("/dashboard", dHandler.GetAllTotal, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints users
 	users := v1.Group("/users")
