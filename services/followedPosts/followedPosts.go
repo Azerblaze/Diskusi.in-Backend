@@ -105,7 +105,6 @@ func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.Public
 				UserID:   post.UserID,
 				Photo:    post.User.Photo,
 				Username: post.User.Username,
-				Photo:    post.User.Photo,
 			},
 			Post: dto.FollowedPost{
 				PostID:    int(post.ID),
