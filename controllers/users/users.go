@@ -149,14 +149,16 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		}
 	}
 
-	result, err := h.IUserServices.GetUsers(token, page)
+	result, numberOfPage, err := h.IUserServices.GetUsers(token, page)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message": "Success",
-		"data":    result,
+		"message":        "Success",
+		"data":           result,
+		"number_of_page": numberOfPage,
+		"page":           page,
 	})
 }
 

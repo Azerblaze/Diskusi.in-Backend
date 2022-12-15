@@ -64,4 +64,5 @@ type IDatabase interface {
 	CountAllPost() (int, error)
 	CountPostByTopicID(topicId int) (int, error)
 	CountPostByUserID(userId int) (int, error)
+	CountUsers() (int, error)
 }

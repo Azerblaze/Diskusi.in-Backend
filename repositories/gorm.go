@@ -522,3 +522,13 @@ func (db GormSql) CountPostByUserID(userId int) (int, error) {
 
 	return int(postCount), nil
 }
+
+func (db GormSql) CountUsers() (int, error) {
+	var userCount int64
+
+	err := db.DB.Table("users").Where("is_admin = 0").Count(&userCount).Error
+	if err != nil {
+		return 0, err
+	}
+	return int(userCount), nil
+}
