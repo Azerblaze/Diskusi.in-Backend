@@ -282,6 +282,9 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	if user.DeletedAt.Time.String() != "" {
+		return echo.NewHTTPError(http.StatusNotFound, "User Not Found or Deleted")
+	}
 
 	if !user.IsAdmin {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
