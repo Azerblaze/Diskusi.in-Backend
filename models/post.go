@@ -13,6 +13,7 @@ type Post struct {
 	TopicID   int    `json:"topicId" form:"topicId"`
 	CreatedAt int    `json:"createdAt" form:"createdAt"`
 	IsActive  bool   `json:"isActive" form:"isActive"`
+	LikeCount int    `json:"likecount" form:"likecount"`
 
 	Comments []Comment `json:"comments"`
 	User     User      `json:"user"`
