@@ -5,7 +5,6 @@ import (
 	"discusiin/models"
 	"discusiin/repositories"
 	"net/http"
-	"sort"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -293,7 +292,7 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 		page = 1
 	}
 
-	posts, err := p.IDatabase.GetRecentPost(page, search)
+	posts, err := p.IDatabase.GetAllPostByLike(page)
 	if err != nil {
 		if err.Error() == "record not found" {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Post not found")
@@ -330,11 +329,6 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 			},
 		})
 	}
-
-	//sort recent post slice
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].Count.LikeCount-result[i].Count.DislikeCount > result[j].Count.LikeCount-result[j].Count.DislikeCount
-	})
 
 	//count page number
 	numberOfPost, errPage := p.IDatabase.CountAllPost()
