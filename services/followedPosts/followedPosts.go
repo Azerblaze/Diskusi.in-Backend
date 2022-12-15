@@ -4,6 +4,7 @@ import (
 	"discusiin/dto"
 	"discusiin/models"
 	"discusiin/repositories"
+	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -97,13 +98,14 @@ func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.Public
 
 	var result []dto.PublicFollowedPost
 	for _, followedPost := range followedPosts {
-		post, _ := b.IDatabase.GetPostById(int(followedPost.ID))
+		post, _ := b.IDatabase.GetPostById(int(followedPost.PostID))
 		result = append(result, dto.PublicFollowedPost{
 			Model: followedPost.Model,
 			User: dto.FollowedPostUser{
 				UserID:   post.UserID,
 				Photo:    post.User.Photo,
 				Username: post.User.Username,
+				Photo:    post.User.Photo,
 			},
 			Post: dto.FollowedPost{
 				PostID:    int(post.ID),
@@ -113,6 +115,6 @@ func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.Public
 			},
 		})
 	}
-
+	log.Println("success get all followed posts")
 	return result, nil
 }
