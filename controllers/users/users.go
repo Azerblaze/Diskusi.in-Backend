@@ -365,13 +365,13 @@ func (h *UserHandler) BanUser(c echo.Context) error {
 	}
 
 	//ban user
-	err := h.IUserServices.BanUser(token, userId, user)
+	userBanned, err := h.IUserServices.BanUser(token, userId, user)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Success",
-		// "data":    result,
+		"data":    userBanned,
 	})
 }

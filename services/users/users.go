@@ -29,7 +29,7 @@ type IUserServices interface {
 	GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error)
 	GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error)
 	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
-	BanUser(token dto.Token, userId int, user models.User) error
+	BanUser(token dto.Token, userId int, user models.User) (models.User, error)
 }
 
 type userServices struct {
@@ -505,25 +505,25 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	return result, numberOfPage, nil
 }
 
-func (s *userServices) BanUser(token dto.Token, userId int, user models.User) error {
+func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (models.User, error) {
 	//check user admin
 	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+		return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return models.User{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//check if user exist
 	oldUser, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+			return models.User{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+			return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 		}
 	}
 
@@ -536,8 +536,8 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) er
 	oldUser.BanUntil = user.BanUntil
 	err := s.IDatabase.UpdateProfile(oldUser)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return nil
+	return oldUser, nil
 }
