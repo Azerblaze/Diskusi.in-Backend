@@ -88,7 +88,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints users
 	users := v1.Group("/users")
-	users.GET("", uHandler.GetUsers)
+	users.GET("", uHandler.GetUsers, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/:user_id/post", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/:user_id/comment", uHandler.GetCommentByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
