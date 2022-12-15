@@ -143,7 +143,12 @@ func (h *TopicHandler) DeleteTopic(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	err := h.ITopicServices.RemoveTopic(id)
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	err := h.ITopicServices.RemoveTopic(token, id)
 	if err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ type ITopicServices interface {
 	GetTopic(id int) (models.Topic, error)
 	UpdateTopicDescription(topic models.Topic, token dto.Token) error
 	SaveTopic(topic models.Topic, token dto.Token) error
-	RemoveTopic(id int) error
+	RemoveTopic(token dto.Token, id int) error
 }
 
 type topicServices struct {
@@ -111,7 +111,20 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 	return nil
 }
 
-func (t *topicServices) RemoveTopic(id int) error {
+func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
+	//check user
+	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
+	if errGetUser != nil {
+		if errGetUser.Error() == "record not found" {
+			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		} else {
+			return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
+		}
+	}
+	if !user.IsAdmin {
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+	}
+
 	topic, errGetTopic := t.IDatabase.GetTopicByID(id)
 	if errGetTopic != nil {
 		if errGetTopic.Error() == "record not found" {
