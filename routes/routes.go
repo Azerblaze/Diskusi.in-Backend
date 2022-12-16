@@ -6,6 +6,7 @@ import (
 	"discusiin/repositories"
 	bService "discusiin/services/bookmarks"
 	cService "discusiin/services/comments"
+	dService "discusiin/services/dashboard"
 	fService "discusiin/services/followedPosts"
 	lService "discusiin/services/likes"
 	pService "discusiin/services/posts"
@@ -21,13 +22,14 @@ type Payload struct {
 	DBGorm   *gorm.DB
 	DBSql    *sql.DB
 	repoSql  repositories.IDatabase
+	dService dService.IDashboardServices
 	uService uService.IUserServices
 	tService tService.ITopicServices
 	pService pService.IPostServices
 	cService cService.ICommentServices
 	rService rService.IReplyServices
 	lService lService.ILikeServices
-  fService fService.IFollowedPostServices
+	fService fService.IFollowedPostServices
 	bService bService.IBookmarkServices
 }
 
@@ -55,6 +57,23 @@ func (p *Payload) GetUserServices() uService.IUserServices {
 		p.InitUserService()
 	}
 	return p.uService
+}
+
+// Dashboard -----------------------------------------------------------------------------------------------------------------
+func (p *Payload) GetDashboardServices() dService.IDashboardServices {
+	if p.dService == nil {
+		p.InitDashboardService()
+	}
+
+	return p.dService
+}
+
+func (p *Payload) InitDashboardService() {
+	if p.repoSql == nil {
+		p.InitRepoMysql()
+	}
+
+	p.dService = dService.NewDashboardServices(p.repoSql)
 }
 
 // Topic -----------------------------------------------------------------------------------------------------------------
@@ -152,12 +171,13 @@ func (p *Payload) GetBookmarkServices() bService.IBookmarkServices {
 }
 
 func (p *Payload) InitBookmarkService() {
-  if p.repoSql == nil {
+	if p.repoSql == nil {
 		p.InitRepoMysql()
 	}
-  
+
 	p.bService = bService.NewBookmarkServices(p.repoSql)
 }
+
 // FollowedPost -----------------------------------------------------------------------------------------------------------------
 func (p *Payload) GetFollowedPostServices() fService.IFollowedPostServices {
 	if p.fService == nil {
@@ -168,10 +188,9 @@ func (p *Payload) GetFollowedPostServices() fService.IFollowedPostServices {
 }
 
 func (p *Payload) InitFollowedPostService() {
-  	if p.repoSql == nil {
+	if p.repoSql == nil {
 		p.InitRepoMysql()
 	}
-  
-  p.fService = fService.NewFollowedPostServices(p.repoSql)
-}
 
+	p.fService = fService.NewFollowedPostServices(p.repoSql)
+}

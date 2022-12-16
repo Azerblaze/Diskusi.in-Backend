@@ -495,6 +495,26 @@ func (db GormSql) GetAllFollowedPost(userId int) ([]models.FollowedPost, error) 
 }
 
 // Count ------------------------------------------------------------------------------------------------------------------------------------------------
+func (db GormSql) CountAllUser() (int, error) {
+	var numberOfUser int64
+
+	err := db.DB.Table("users").Count(&numberOfUser).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int(numberOfUser), nil
+}
+func (db GormSql) CountAllTopic() (int, error) {
+	var numberOfTopic int64
+
+	err := db.DB.Table("topics").Count(&numberOfTopic).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int(numberOfTopic), nil
+}
 func (db GormSql) CountPostLike(postID int) (int, error) {
 	var postLike int64
 

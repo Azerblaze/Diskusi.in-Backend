@@ -59,6 +59,8 @@ type IDatabase interface {
 	DeleteBookmark(bookmarkId int) error
 	GetAllBookmark(userId int) ([]models.Bookmark, error)
 
+	CountAllUser() (int, error)
+	CountAllTopic() (int, error)
 	CountPostLike(postID int) (int, error)
 	CountPostComment(postID int) (int, error)
 	CountPostDislike(postID int) (int, error)
