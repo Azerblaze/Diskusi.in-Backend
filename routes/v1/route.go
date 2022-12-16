@@ -91,7 +91,8 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	api := e.Group("/api")
 	v1 := api.Group("/v1")
 
-	v1.GET("/dashboard", dHandler.GetAllTotal, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	dashboard := v1.Group("/dashboard")
+	dashboard.GET("", dHandler.GetAllTotal, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints users
 	users := v1.Group("/users")
