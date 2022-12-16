@@ -132,7 +132,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 	})
 }
 
-func (h *UserHandler) GetUsers(c echo.Context) error {
+func (h *UserHandler) GetUsersAdminNotIncluded(c echo.Context) error {
 	token, errDecodeJWT := helper.DecodeJWT(c)
 	if errDecodeJWT != nil {
 		return errDecodeJWT
@@ -149,7 +149,7 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		}
 	}
 
-	result, numberOfPage, err := h.IUserServices.GetUsers(token, page)
+	result, numberOfPage, err := h.IUserServices.GetUsersAdminNotIncluded(token, page)
 	if err != nil {
 		return err
 	}
