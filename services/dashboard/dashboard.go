@@ -35,7 +35,7 @@ func (d *dashboardServices) GetAllTotal(token dto.Token) (int, int, int, error) 
 	}
 
 	//get user total
-	userCount, errUserCount := d.IDatabase.CountAllUser()
+	userCount, errUserCount := d.IDatabase.CountUsers()
 	if errUserCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserCount.Error())
 	}
