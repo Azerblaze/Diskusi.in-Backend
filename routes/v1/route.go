@@ -110,18 +110,18 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints topics
 	topics := v1.Group("/topics")
-	topics.GET("", tHandler.GetAllTopics)
-	topics.GET("/:topic_id", tHandler.GetTopic)
+	topics.GET("", tHandler.GetAllTopics, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	topics.GET("/:topic_id", tHandler.GetTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.POST("/create", tHandler.CreateNewTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.PUT("/edit_description/:topic_id", tHandler.UpdateTopicDescription, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.DELETE("/delete/:topic_id", tHandler.DeleteTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints posts
 	posts := v1.Group("/posts")
-	posts.GET("/all/:topic_name", pHandler.GetAllPost)
-	posts.GET("/recents", pHandler.GetRecentPost)
-	posts.GET("/recents/top", pHandler.GetAllPostByLike)
-	posts.GET("/:post_id", pHandler.GetPost)
+	posts.GET("/all/:topic_name", pHandler.GetAllPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/recents", pHandler.GetRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/recents/top", pHandler.GetAllPostByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/:post_id", pHandler.GetPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.POST("/create/:topic_name", pHandler.CreateNewPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/:post_id/suspend", pHandler.SuspendPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/edit/:post_id", pHandler.EditPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
