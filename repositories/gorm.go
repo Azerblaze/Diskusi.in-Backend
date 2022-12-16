@@ -54,7 +54,7 @@ func (db GormSql) GetUserById(userId int) (models.User, error) {
 	}
 	return user, nil
 }
-func (db GormSql) GetUsers(page int) ([]models.User, error) {
+func (db GormSql) GetUsersAdminNotIncluded(page int) ([]models.User, error) {
 	var users []models.User
 	err := db.DB.Where("is_admin = 0").Order("username ASC").Offset((page - 1) * 20).Limit(20).Find(&users).Error
 	if err != nil {

@@ -205,7 +205,7 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, in
 	if !u.IsAdmin {
 		return nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
-	users, err := s.IDatabase.GetUsers(page)
+	users, err := s.IDatabase.GetUsersAdminNotIncluded(page)
 	if err != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -221,7 +221,7 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, in
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	countUser, _ := s.IDatabase.CountUsers()
+	countUser := len(result)
 	var numberOfPage int
 	if countUser%20 == 0 {
 		numberOfPage = countUser / 20
