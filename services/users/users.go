@@ -279,19 +279,20 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 }
 
 func (s *userServices) DeleteUser(token dto.Token, userId int) error {
-	//check user
-	user, err := s.IDatabase.GetUserByUsername(token.Username)
+	//check user admin
+	userAdmin, err := s.IDatabase.GetUserByUsername(token.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	if user.DeletedAt.Time.String() != "" {
-		return echo.NewHTTPError(http.StatusNotFound, "User Not Found or Deleted")
-	}
 
-	if !user.IsAdmin {
+	if !userAdmin.IsAdmin {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
+	_, err = s.IDatabase.GetUserById(userId)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	errDeleteUser := s.IDatabase.DeleteUser(userId)
 	if errDeleteUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
