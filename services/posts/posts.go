@@ -4,6 +4,7 @@ import (
 	"discusiin/dto"
 	"discusiin/models"
 	"discusiin/repositories"
+	"math"
 	"net/http"
 	"time"
 
@@ -117,13 +118,13 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
-	return result, numberOfPage, nil
+	return result, int(numberOfPage), nil
 }
 
 func (p *postServices) GetPost(id int) (dto.PublicPost, error) {
@@ -282,14 +283,14 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
 
-	return result, numberOfPage, nil
+	return result, int(numberOfPage), nil
 }
 
 func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPost, int, error) {
@@ -346,14 +347,14 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
 
-	return result, numberOfPage, nil
+	return result, int(numberOfPage), nil
 }
 
 func (p *postServices) SuspendPost(token dto.Token, postId int) error {

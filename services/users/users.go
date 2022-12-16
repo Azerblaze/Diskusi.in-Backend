@@ -6,6 +6,7 @@ import (
 	"discusiin/middleware"
 	"discusiin/models"
 	"discusiin/repositories"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -226,7 +227,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := userCount / pageSize
+	numberOfPage := math.Ceil(float64(userCount) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if userCount%pageSize != 0 {
@@ -236,7 +237,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 		numberOfPage += 1
 	}
 
-	return result, numberOfPage, nil
+	return result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
@@ -363,14 +364,14 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
 
-	return user, result, numberOfPage, nil
+	return user, result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error) {
@@ -448,14 +449,14 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
 
-	return user, result, numberOfPage, nil
+	return user, result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error) {
@@ -511,13 +512,13 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	pageSize := 20
 
 	// Hitung jumlah page dengan pembagian sederhana
-	numberOfPage := numberOfPost / pageSize
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
 	if numberOfPost%pageSize != 0 {
 		numberOfPage++
 	}
-	return result, numberOfPage, nil
+	return result, int(numberOfPage), nil
 }
 
 func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (models.User, error) {
