@@ -222,7 +222,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	userCount := len(users)
+	userCount, _ := s.IDatabase.CountAllUserNotAdmin()
 	// Jumlah data per page
 	pageSize := 20
 
@@ -230,12 +230,6 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 	numberOfPage := math.Ceil(float64(userCount) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
-	if userCount%pageSize != 0 {
-		numberOfPage++
-	}
-	if userCount%20 != 0 {
-		numberOfPage += 1
-	}
 
 	return result, int(numberOfPage), nil
 }
@@ -367,9 +361,6 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
-	if numberOfPost%pageSize != 0 {
-		numberOfPage++
-	}
 
 	return user, result, int(numberOfPage), nil
 }
@@ -452,9 +443,6 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
-	if numberOfPost%pageSize != 0 {
-		numberOfPage++
-	}
 
 	return user, result, int(numberOfPage), nil
 }
@@ -515,9 +503,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
 
 	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
-	if numberOfPost%pageSize != 0 {
-		numberOfPage++
-	}
+
 	return result, int(numberOfPage), nil
 }
 

@@ -582,7 +582,7 @@ func (db GormSql) CountCommentByUserID(userId int) (int, error) {
 
 	return int(commentCount), nil
 }
-func (db GormSql) CountUsers() (int, error) {
+func (db GormSql) CountAllUserNotAdmin() (int, error) {
 	var userCount int64
 
 	err := db.DB.Table("users").Where("is_admin = 0").Count(&userCount).Error
