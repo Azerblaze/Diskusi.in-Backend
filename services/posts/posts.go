@@ -113,14 +113,16 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	// Jumlah data per page
+	pageSize := 20
 
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
 	}
-
 	return result, numberOfPage, nil
 }
 
@@ -276,11 +278,15 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
 	}
 
 	return result, numberOfPage, nil
@@ -336,11 +342,15 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
 	}
 
 	return result, numberOfPage, nil

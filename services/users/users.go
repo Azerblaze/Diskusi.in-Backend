@@ -221,12 +221,19 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	countUser := len(result)
-	var numberOfPage int
-	if countUser%20 == 0 {
-		numberOfPage = countUser / 20
-	} else {
-		numberOfPage = countUser/20 + 1
+	userCount := len(users)
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := userCount / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if userCount%pageSize != 0 {
+		numberOfPage++
+	}
+	if userCount%20 != 0 {
+		numberOfPage += 1
 	}
 
 	return result, numberOfPage, nil
@@ -352,12 +359,15 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
 
-	//count number of page
-	var numberOfPage int
-	if numberOfPost%30 == 0 {
-		numberOfPage = (numberOfPost / 30)
-	} else {
-		numberOfPage = (numberOfPost / 30) + 1
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
 	}
 
 	return user, result, numberOfPage, nil
@@ -434,12 +444,15 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
 
-	//count number of page
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
 	}
 
 	return user, result, numberOfPage, nil
@@ -494,14 +507,16 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
 
-	//count number of page
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
-	}
+	// Jumlah data per page
+	pageSize := 20
 
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := numberOfPost / pageSize
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
+	}
 	return result, numberOfPage, nil
 }
 
