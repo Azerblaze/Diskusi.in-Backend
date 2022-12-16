@@ -538,6 +538,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (m
 	if err != nil {
 		return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	oldUser.Password = "<secret>"
 
 	return oldUser, nil
 }
