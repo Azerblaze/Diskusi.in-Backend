@@ -495,10 +495,10 @@ func (db GormSql) GetAllFollowedPost(userId int) ([]models.FollowedPost, error) 
 }
 
 // Count ------------------------------------------------------------------------------------------------------------------------------------------------
-func (db GormSql) CountAllUser() (int, error) {
+func (db GormSql) CountAllUserNotIncludeDeletedUser() (int, error) {
 	var numberOfUser int64
 
-	err := db.DB.Table("users").Count(&numberOfUser).Error
+	err := db.DB.Table("users").Where("deleted_at IS NULL").Count(&numberOfUser).Error
 	if err != nil {
 		return 0, err
 	}
@@ -582,10 +582,10 @@ func (db GormSql) CountCommentByUserID(userId int) (int, error) {
 
 	return int(commentCount), nil
 }
-func (db GormSql) CountAllUserNotAdmin() (int, error) {
+func (db GormSql) CountAllUserNotAdminNotIncludeDeletedUser() (int, error) {
 	var userCount int64
 
-	err := db.DB.Table("users").Where("is_admin = 0").Count(&userCount).Error
+	err := db.DB.Table("users").Where("is_admin = 0").Where("deleted_at IS NULL").Count(&userCount).Error
 	if err != nil {
 		return 0, err
 	}

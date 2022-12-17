@@ -222,7 +222,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	userCount, _ := s.IDatabase.CountAllUserNotAdmin()
+	userCount, _ := s.IDatabase.CountAllUserNotIncludeDeletedUser()
 	// Jumlah data per page
 	pageSize := 20
 
