@@ -80,7 +80,7 @@ func (h *FollowedPostHandler) GetAllFollowedPost(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Success",
 		"data":    followedPosts,
 	})
