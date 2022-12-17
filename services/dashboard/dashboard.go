@@ -13,14 +13,14 @@ func NewDashboardServices(db repositories.IDatabase) IDashboardServices {
 }
 
 type IDashboardServices interface {
-	GetAllTotal(token dto.Token) (int, int, int, error)
+	GetTotalCountOfUserAndTopicAndPost(token dto.Token) (int, int, int, error)
 }
 
 type dashboardServices struct {
 	repositories.IDatabase
 }
 
-func (d *dashboardServices) GetAllTotal(token dto.Token) (int, int, int, error) {
+func (d *dashboardServices) GetTotalCountOfUserAndTopicAndPost(token dto.Token) (int, int, int, error) {
 	//check user
 	user, errGetUser := d.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {

@@ -50,7 +50,7 @@ func (h *PostHandler) CreateNewPost(c echo.Context) error {
 	})
 }
 
-func (h *PostHandler) GetAllPost(c echo.Context) error {
+func (h *PostHandler) GetAllPostByTopicName(c echo.Context) error {
 	if c.Param("topic_name") == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
 	}
@@ -87,7 +87,7 @@ func (h *PostHandler) GetAllPost(c echo.Context) error {
 	})
 }
 
-func (h *PostHandler) GetPost(c echo.Context) error {
+func (h *PostHandler) GetPostByPostID(c echo.Context) error {
 
 	if c.Param("post_id") == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "post_id parameter should not be empty")
@@ -166,7 +166,7 @@ func (h *PostHandler) DeletePost(c echo.Context) error {
 	})
 }
 
-func (h *PostHandler) GetRecentPost(c echo.Context) error {
+func (h *PostHandler) GetAllRecentPost(c echo.Context) error {
 	//check if page exist
 	pageStr := c.QueryParam("page")
 	var page int
@@ -194,7 +194,7 @@ func (h *PostHandler) GetRecentPost(c echo.Context) error {
 	})
 }
 
-func (h *PostHandler) GetAllPostByLike(c echo.Context) error {
+func (h *PostHandler) GetAllPostSortByLike(c echo.Context) error {
 	//check if page exist
 	pageStr := c.QueryParam("page")
 	var page int

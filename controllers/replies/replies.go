@@ -50,7 +50,7 @@ func (h *ReplyHandler) CreateReply(c echo.Context) error {
 	})
 }
 
-func (h *ReplyHandler) GetAllReply(c echo.Context) error {
+func (h *ReplyHandler) GetAllReplyByCommentID(c echo.Context) error {
 	//get comment id
 	if c.Param("comment_id") == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "comment_id should not be empty")

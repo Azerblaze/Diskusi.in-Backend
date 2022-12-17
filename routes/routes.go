@@ -33,30 +33,23 @@ type Payload struct {
 	bService bService.IBookmarkServices
 }
 
+func (p *Payload) InitRepoMysql() {
+	p.repoSql = repositories.NewGorm(p.DBGorm)
+}
+
+// User -----------------------------------------------------------------------------------------------------------------
+func (p *Payload) GetUserServices() uService.IUserServices {
+	if p.uService == nil {
+		p.InitUserService()
+	}
+	return p.uService
+}
 func (p *Payload) InitUserService() {
 	if p.repoSql == nil {
 		p.InitRepoMysql()
 	}
 
 	p.uService = uService.NewUserServices(p.repoSql)
-}
-func (p *Payload) InitPocketMessageService() {
-	if p.repoSql == nil {
-		p.InitRepoMysql()
-	}
-
-	p.uService = uService.NewUserServices(p.repoSql)
-}
-
-func (p *Payload) InitRepoMysql() {
-	p.repoSql = repositories.NewGorm(p.DBGorm)
-}
-
-func (p *Payload) GetUserServices() uService.IUserServices {
-	if p.uService == nil {
-		p.InitUserService()
-	}
-	return p.uService
 }
 
 // Dashboard -----------------------------------------------------------------------------------------------------------------

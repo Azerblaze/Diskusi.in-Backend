@@ -43,7 +43,7 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 
 }
 
-func (h *CommentHandler) GetAllComment(c echo.Context) error {
+func (h *CommentHandler) GetAllCommentByPostID(c echo.Context) error {
 
 	//get post id
 	if c.Param("post_id") == "" {

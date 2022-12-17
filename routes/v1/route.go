@@ -56,31 +56,24 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	dHandler := dashboard.DashboardHandler{
 		IDashboardServices: payload.GetDashboardServices(),
 	}
-
 	uHandler := users.UserHandler{
 		IUserServices: payload.GetUserServices(),
 	}
-
 	tHandler := topics.TopicHandler{
 		ITopicServices: payload.GetTopicServices(),
 	}
-
 	pHandler := posts.PostHandler{
 		IPostServices: payload.GetPostServices(),
 	}
-
 	cHandler := comments.CommentHandler{
 		ICommentServices: payload.GetCommentServices(),
 	}
-
 	rHandler := replies.ReplyHandler{
 		IReplyServices: payload.GetReplyServices(),
 	}
-
 	lHandler := likes.LikeHandler{
 		ILikeServices: payload.GetLikeServices(),
 	}
-
 	fHandler := followedPosts.FollowedPostHandler{
 		IFollowedPostServices: payload.GetFollowedPostServices(),
 	}
@@ -92,7 +85,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	v1 := api.Group("/v1")
 
 	dashboard := v1.Group("/dashboard")
-	dashboard.GET("", dHandler.GetAllTotal, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	dashboard.GET("", dHandler.GetTotalCountOfUserAndTopicAndPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints users
 	users := v1.Group("/users")
@@ -118,10 +111,10 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints posts
 	posts := v1.Group("/posts")
-	posts.GET("/all/:topic_name", pHandler.GetAllPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/recents", pHandler.GetRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/recents/top", pHandler.GetAllPostByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/:post_id", pHandler.GetPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/all/:topic_name", pHandler.GetAllPostByTopicName, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/recents", pHandler.GetAllRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/recents/top", pHandler.GetAllPostSortByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/:post_id", pHandler.GetPostByPostID, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.POST("/create/:topic_name", pHandler.CreateNewPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/:post_id/suspend", pHandler.SuspendPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/edit/:post_id", pHandler.EditPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
@@ -135,14 +128,14 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints comments
 	comments := posts.Group("/comments")
-	comments.GET("/:post_id", cHandler.GetAllComment)
+	comments.GET("/:post_id", cHandler.GetAllCommentByPostID)
 	comments.POST("/create/:post_id", cHandler.CreateComment, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	comments.PUT("/edit/:comment_id", cHandler.UpdateComment, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	comments.DELETE("/delete/:comment_id", cHandler.DeleteComment, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints reply
 	replys := comments.Group("/replies")
-	replys.GET("/:comment_id", rHandler.GetAllReply)
+	replys.GET("/:comment_id", rHandler.GetAllReplyByCommentID)
 	replys.POST("/create/:comment_id", rHandler.CreateReply, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	replys.PUT("/edit/:reply_id", rHandler.UpdateReply, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	replys.DELETE("/delete/:reply_id", rHandler.DeleteReply, middleware.JWT([]byte(configs.Cfg.TokenSecret)))

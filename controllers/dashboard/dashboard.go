@@ -12,7 +12,7 @@ type DashboardHandler struct {
 	dashboard.IDashboardServices
 }
 
-func (h *DashboardHandler) GetAllTotal(c echo.Context) error {
+func (h *DashboardHandler) GetTotalCountOfUserAndTopicAndPost(c echo.Context) error {
 	//get logged userId
 	token, errDecodeJWT := helper.DecodeJWT(c)
 	if errDecodeJWT != nil {
@@ -20,7 +20,7 @@ func (h *DashboardHandler) GetAllTotal(c echo.Context) error {
 	}
 
 	//get all total of user, topic and post
-	userCount, topicCount, postCount, errTotal := h.IDashboardServices.GetAllTotal(token)
+	userCount, topicCount, postCount, errTotal := h.IDashboardServices.GetTotalCountOfUserAndTopicAndPost(token)
 	if errTotal != nil {
 		return errTotal
 	}
