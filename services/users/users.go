@@ -30,7 +30,7 @@ type IUserServices interface {
 	GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error)
 	GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error)
 	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
-	BanUser(token dto.Token, userId int, user models.User) (models.User, error)
+	BanUser(token dto.Token, userId int, user models.User) (dto.PublicUser, error)
 }
 
 type userServices struct {
@@ -508,25 +508,25 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	return result, int(numberOfPage), nil
 }
 
-func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (models.User, error) {
+func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (dto.PublicUser, error) {
 	//check user admin
 	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
-		return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return models.User{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//check if user exist
 	oldUser, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser.Error() == "record not found" {
-			return models.User{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
+			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
-			return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+			return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 		}
 	}
 
@@ -539,9 +539,17 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (m
 	oldUser.BanUntil = user.BanUntil
 	err := s.IDatabase.UpdateProfile(oldUser)
 	if err != nil {
-		return models.User{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	oldUser.Password = "<secret>"
 
-	return oldUser, nil
+	result := dto.PublicUser{
+		ID:       oldUser.ID,
+		Username: oldUser.Username,
+		Email:    oldUser.Email,
+		Photo:    oldUser.Photo,
+		IsAdmin:  oldUser.IsAdmin,
+		BanUntil: oldUser.BanUntil,
+	}
+
+	return result, nil
 }
