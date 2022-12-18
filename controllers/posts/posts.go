@@ -87,6 +87,40 @@ func (h *PostHandler) GetAllPostByTopicName(c echo.Context) error {
 	})
 }
 
+func (h *PostHandler) GetAllPostByTopicByLike(c echo.Context) error {
+	if c.Param("topic_name") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
+	}
+	topicName := helper.URLDecodeReformat(c.Param("topic_name"))
+	if topicName == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
+	}
+
+	//check if page exist
+	var page int
+	if c.QueryParam("page") == "" {
+		page = 1
+	} else {
+		var errAtoi error
+		page, errAtoi = strconv.Atoi(c.QueryParam("page"))
+		if errAtoi != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+		}
+	}
+
+	posts, numberOfPage, err := h.IPostServices.GetPostsByTopicByLike(topicName, page)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":        "Success",
+		"data":           posts,
+		"number_of_page": numberOfPage,
+		"page":           page,
+	})
+}
+
 func (h *PostHandler) GetPostByPostID(c echo.Context) error {
 
 	if c.Param("post_id") == "" {

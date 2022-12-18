@@ -112,6 +112,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	//endpoints posts
 	posts := v1.Group("/posts")
 	posts.GET("/all/:topic_name", pHandler.GetAllPostByTopicName, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	posts.GET("/all/:topic_name/top", pHandler.GetAllPostByTopicByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.GET("/recents", pHandler.GetAllRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.GET("/recents/top", pHandler.GetAllPostSortByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.GET("/:post_id", pHandler.GetPostByPostID, middleware.JWT([]byte(configs.Cfg.TokenSecret)))

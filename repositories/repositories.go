@@ -23,6 +23,7 @@ type IDatabase interface {
 
 	SaveNewPost(post models.Post) error
 	GetAllPostByTopic(topidID int, page int, search string) ([]models.Post, error)
+	GetAllPostByTopicByLike(topicID int, page int) ([]models.Post, error)
 	GetPostById(postID int) (models.Post, error)
 	GetRecentPost(page int, search string) ([]models.Post, error)
 	GetPostByUserId(userId int, page int) ([]models.Post, error)
