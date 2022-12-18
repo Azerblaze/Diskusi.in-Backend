@@ -240,8 +240,16 @@ func (db GormSql) SavePost(post models.Post) error {
 	return nil
 }
 
-func (db GormSql) DeletePost(id int) error {
-	err := db.DB.Delete(&models.Post{}, id).Error
+func (db GormSql) DeletePostByPostID(id int) error {
+	err := db.DB.Where("id = ?", id).Delete(&models.Post{}).Error
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (db GormSql) DeletePostByUserID(userID int) error {
+	err := db.DB.Where("user_id = ?", userID).Delete(&models.Post{}).Error
 	if err != nil {
 		return err
 	}

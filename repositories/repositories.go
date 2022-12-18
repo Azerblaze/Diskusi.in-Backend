@@ -28,7 +28,8 @@ type IDatabase interface {
 	GetPostByUserId(userId int, page int) ([]models.Post, error)
 	GetAllPostByLike(page int) ([]models.Post, error)
 	SavePost(post models.Post) error
-	DeletePost(postID int) error
+	DeletePostByPostID(postID int) error
+	DeletePostByUserID(userID int) error
 	GetPostByIdWithAll(postID int) (models.Post, error)
 
 	SaveNewComment(comment models.Comment) error

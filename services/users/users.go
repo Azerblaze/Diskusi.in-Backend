@@ -297,6 +297,10 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	if errDeleteUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
 	}
+	errDeletePost := s.IDatabase.DeletePostByUserID(userId)
+	if errDeletePost != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
+	}
 
 	return nil
 }

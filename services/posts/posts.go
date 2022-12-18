@@ -221,7 +221,7 @@ func (p *postServices) DeletePost(id int, token dto.Token) error {
 		}
 	}
 
-	err = p.IDatabase.DeletePost(id)
+	err = p.IDatabase.DeletePostByPostID(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
