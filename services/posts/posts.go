@@ -18,6 +18,7 @@ func NewPostServices(db repositories.IDatabase) IPostServices {
 type IPostServices interface {
 	CreatePost(post models.Post, name string, token dto.Token) error
 	GetPosts(name string, page int, search string) ([]dto.PublicPost, int, error)
+	GetPostsByTopicByLike(name string, page int) ([]dto.PublicPost, int, error)
 	GetPost(id int) (dto.PublicPost, error)
 	UpdatePost(newPost models.Post, id int, token dto.Token) error
 	DeletePost(id int, token dto.Token) error
@@ -75,6 +76,74 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 	}
 
 	posts, err := p.IDatabase.GetAllPostByTopic(int(topic.ID), page, search)
+	if err != nil {
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	var result []dto.PublicPost
+	for _, post := range posts {
+		likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
+		commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
+		dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+
+		result = append(result, dto.PublicPost{
+			Model:     post.Model,
+			Title:     post.Title,
+			Photo:     post.Photo,
+			Body:      post.Body,
+			CreatedAt: post.CreatedAt,
+			IsActive:  post.IsActive,
+			User: dto.PostUser{
+				UserID:   post.UserID,
+				Photo:    post.User.Photo,
+				Username: post.User.Username,
+			},
+			Topic: dto.PostTopic{
+				TopicID:   post.TopicID,
+				TopicName: post.Topic.Name,
+			},
+			Count: dto.PostCount{
+				LikeCount:    likeCount,
+				CommentCount: commentCount,
+				DislikeCount: dislikeCount,
+			},
+		})
+	}
+
+	//count page number
+	numberOfPost, errPage := p.IDatabase.CountPostByTopicID(int(topic.ID))
+	if errPage != nil {
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+	if numberOfPost%pageSize != 0 {
+		numberOfPage++
+	}
+	return result, int(numberOfPage), nil
+}
+
+func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.PublicPost, int, error) {
+	//find topic
+	topic, err := p.IDatabase.GetTopicByName(name)
+	if err != nil {
+		if err.Error() == "record not found" {
+			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "topic not found")
+		}
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	//cek jika page kosong
+	if page < 1 {
+		page = 1
+	}
+
+	posts, err := p.IDatabase.GetAllPostByTopicByLike(int(topic.ID), page)
 	if err != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

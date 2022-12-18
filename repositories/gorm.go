@@ -186,6 +186,18 @@ func (db GormSql) GetAllPostByTopic(id int, page int, search string) ([]models.P
 	return posts, nil
 }
 
+func (db GormSql) GetAllPostByTopicByLike(topicID int, page int) ([]models.Post, error) {
+	var posts []models.Post
+
+	//find topic with like
+	err := db.DB.Where("topic_id = ?", topicID).Order("like_count DESC").Preload("User").Preload("Topic").Offset((page - 1) * 20).Limit(20).Find(&posts).Error
+	if err != nil {
+		return []models.Post{}, err
+	}
+
+	return posts, nil
+}
+
 func (db GormSql) GetPostById(id int) (models.Post, error) {
 	var post models.Post
 
