@@ -1,24 +1,7 @@
 version: '3.7'
 
 services:
-  db-mysql:
-    image: mysql:8.0.28
-    environment:
-      MYSQL_ROOT_PASSWORD: "root"
-      MYSQL_DATABASE: "discussin_mobile"
-    healthcheck:
-      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      interval: 5s
-      retries: 15
-    ports:
-      - '3306:3306'
-    expose:
-      - '3306'
-
   app:
     build: ./
-    depends_on:
-      db-mysql:
-        condition: service_healthy
     ports:
-      - "80:8080"
+      - "80:80"
