@@ -81,6 +81,9 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 		IBookmarkServices: payload.GetBookmarkServices(),
 	}
 
+	e.GET("/swagger", func(c echo.Context) error {
+		return c.Redirect(http.StatusFound, "https://app.swaggerhub.com/apis/MIFTAHERS_2/Diskusiin-API/Latest#/")
+	})
 	api := e.Group("/api")
 	v1 := api.Group("/v1")
 
