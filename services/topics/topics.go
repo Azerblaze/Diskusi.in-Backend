@@ -17,6 +17,7 @@ type ITopicServices interface {
 	GetTopics() ([]models.Topic, error)
 	CreateTopic(topic models.Topic, token dto.Token) (models.Topic, error)
 	GetTopic(id int) (models.Topic, error)
+	GetTopTopics() ([]dto.TopTopics, error)
 	GetNumberOfPostOnATopicByTopicName(topicName string) (int, error)
 	UpdateTopicDescription(topic models.Topic, token dto.Token) (models.Topic, error)
 	SaveTopic(topic models.Topic, token dto.Token) error
@@ -40,14 +41,45 @@ func (t *topicServices) GetTopics() ([]models.Topic, error) {
 
 	return topics, nil
 }
+func (t *topicServices) GetTopTopics() ([]dto.TopTopics, error) {
+	//get all topics
+	topTopics, err := t.IDatabase.GetTopTopics()
+	if err != nil {
+		err := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		if err == nil {
+			panic("unexpected nil error")
+		}
+		return nil, err
+	}
+	for i := range topTopics {
+		Topic, err := t.IDatabase.GetTopicByID(int(topTopics[i].TopicID))
+		if err != nil {
+			err := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			if err == nil {
+				panic("unexpected nil error")
+			}
+			return nil, err
+		}
+		topTopics[i].TopicName = Topic.Name
+	}
+	return topTopics, nil
+}
 func (t *topicServices) GetNumberOfPostOnATopicByTopicName(topicName string) (int, error) {
 	//get all topics
 	postCount, err := t.IDatabase.CountNumberOfPostByTopicName(topicName)
 	if err != nil {
 		if err.Error() == "record not found" {
-			return 0, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
+			err := echo.NewHTTPError(http.StatusNotFound, "Topic not found")
+			if err == nil {
+				panic("unexpected nil error")
+			}
+			return 0, err
 		} else {
-			return 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			err := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+			if err == nil {
+				panic("unexpected nil error")
+			}
+			return 0, err
 		}
 	}
 

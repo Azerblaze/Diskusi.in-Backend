@@ -73,6 +73,16 @@ func (h *TopicHandler) GetNumberOfPostOnATopicByTopicName(c echo.Context) error 
 		"data":    numberOfPost,
 	})
 }
+func (h *TopicHandler) GetTopTopics(c echo.Context) error {
+	topics, err := h.ITopicServices.GetTopTopics()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Success",
+		"data":    topics,
+	})
+}
 func (h *TopicHandler) GetAllTopics(c echo.Context) error {
 	topics, err := h.ITopicServices.GetTopics()
 	if err != nil {

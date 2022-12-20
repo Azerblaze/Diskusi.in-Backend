@@ -108,6 +108,7 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	topics := v1.Group("/topics")
 	topics.GET("", tHandler.GetAllTopics, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.GET("/:topic_id", tHandler.GetTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	topics.GET("/top", tHandler.GetTopTopics, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.GET("/:topic_name/count", tHandler.GetNumberOfPostOnATopicByTopicName, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.POST("/create", tHandler.CreateNewTopic, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	topics.PUT("/edit_description/:topic_id", tHandler.UpdateTopicDescription, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
