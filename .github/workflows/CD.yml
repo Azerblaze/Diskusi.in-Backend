@@ -14,8 +14,6 @@ jobs:
           go-version: 1.19
       - name: run unit test
         run: go test -v ./...
-      - name: run linting
-        uses: golangci/golangci-lint-action@v3
   linting:
     runs-on: ubuntu-latest
     name: "linting"
