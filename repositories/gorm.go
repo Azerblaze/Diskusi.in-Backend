@@ -611,3 +611,13 @@ func (db GormSql) CountAllUserNotAdminNotIncludeDeletedUser() (int, error) {
 	}
 	return int(userCount), nil
 }
+func (db GormSql) CountNumberOfPostByTopicName(topicName string) (int, error) {
+	var postCount int64
+
+	err := db.DB.Table("posts").Where("topic_id = (SELECT id FROM topics WHERE name = ?)", topicName).Where("deleted_at IS NULL").Count(&postCount).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return int(postCount), nil
+}

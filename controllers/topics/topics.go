@@ -53,7 +53,26 @@ func (h *TopicHandler) CreateNewTopic(c echo.Context) error {
 		"data":    result,
 	})
 }
+func (h *TopicHandler) GetNumberOfPostOnATopicByTopicName(c echo.Context) error {
+	topic_name := c.Param("topic_name")
+	if topic_name == "" {
+		err := echo.NewHTTPError(http.StatusBadRequest, "topic_name should not be empty")
+		if err == nil {
+			panic("unexpected nil error")
+		}
+		return err
+	}
 
+	numberOfPost, err := h.ITopicServices.GetNumberOfPostOnATopicByTopicName(topic_name)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Success",
+		"data":    numberOfPost,
+	})
+}
 func (h *TopicHandler) GetAllTopics(c echo.Context) error {
 	topics, err := h.ITopicServices.GetTopics()
 	if err != nil {

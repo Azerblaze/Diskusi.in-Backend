@@ -71,4 +71,5 @@ type IDatabase interface {
 	CountAllUserNotAdminNotIncludeDeletedUser() (int, error)
 	CountAllTopic() (int, error)
 	CountAllPost() (int, error)
+	CountNumberOfPostByTopicName(topicName string) (int, error)
 }

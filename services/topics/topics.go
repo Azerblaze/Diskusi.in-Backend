@@ -17,6 +17,7 @@ type ITopicServices interface {
 	GetTopics() ([]models.Topic, error)
 	CreateTopic(topic models.Topic, token dto.Token) (models.Topic, error)
 	GetTopic(id int) (models.Topic, error)
+	GetNumberOfPostOnATopicByTopicName(topicName string) (int, error)
 	UpdateTopicDescription(topic models.Topic, token dto.Token) (models.Topic, error)
 	SaveTopic(topic models.Topic, token dto.Token) error
 	RemoveTopic(token dto.Token, id int) error
@@ -39,7 +40,19 @@ func (t *topicServices) GetTopics() ([]models.Topic, error) {
 
 	return topics, nil
 }
+func (t *topicServices) GetNumberOfPostOnATopicByTopicName(topicName string) (int, error) {
+	//get all topics
+	postCount, err := t.IDatabase.CountNumberOfPostByTopicName(topicName)
+	if err != nil {
+		if err.Error() == "record not found" {
+			return 0, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
+		} else {
+			return 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
 
+	return postCount, nil
+}
 func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models.Topic, error) {
 	// isAdmin?
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
