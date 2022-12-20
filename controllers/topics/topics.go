@@ -123,13 +123,14 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 
 	newTopic.ID = uint(id)
 
-	err := h.ITopicServices.UpdateTopicDescription(newTopic, token)
+	topic, err := h.ITopicServices.UpdateTopicDescription(newTopic, token)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"message": "Topic updated",
+		"data":    topic,
 	})
 }
 

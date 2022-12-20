@@ -17,7 +17,7 @@ type ITopicServices interface {
 	GetTopics() ([]models.Topic, error)
 	CreateTopic(topic models.Topic, token dto.Token) (models.Topic, error)
 	GetTopic(id int) (models.Topic, error)
-	UpdateTopicDescription(topic models.Topic, token dto.Token) error
+	UpdateTopicDescription(topic models.Topic, token dto.Token) (models.Topic, error)
 	SaveTopic(topic models.Topic, token dto.Token) error
 	RemoveTopic(token dto.Token, id int) error
 }
@@ -142,26 +142,26 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 	return nil
 }
 
-func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.Token) error {
+func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.Token) (models.Topic, error) {
 
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "User not found")
+			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
+			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
 		}
 	}
 	if !user.IsAdmin {
-		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return models.Topic{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	topic, errGetTopicByID := t.IDatabase.GetTopicByID(int(newTopic.ID))
 	if errGetTopicByID != nil {
 		if errGetTopicByID.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Topic not found")
+			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errGetTopicByID.Error())
+			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errGetTopicByID.Error())
 		}
 	}
 
@@ -170,8 +170,8 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 
 	err := t.IDatabase.SaveTopic(topic)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return nil
+	return topic, nil
 }
