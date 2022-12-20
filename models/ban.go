@@ -10,8 +10,8 @@ type Ban struct {
 	TopicID   int `json:"topicId" form:"topicId"`
 	Ban_Until int `json:"ban_until" form:"ban_until"`
 
-	User  User
-	Topic Topic
+	User  User  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Topic Topic `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Ban) TableName() string {

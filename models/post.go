@@ -15,9 +15,9 @@ type Post struct {
 	IsActive  bool   `json:"isActive" form:"isActive"`
 	LikeCount int    `json:"likecount" form:"likecount"`
 
-	Comments []Comment `json:"comments"`
-	User     User      `json:"user"`
-	Topic    Topic     `json:"topic"`
+	Comments []Comment `json:"comments" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	User     User      `json:"user" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Topic    Topic     `json:"topic" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Post) TableName() string {

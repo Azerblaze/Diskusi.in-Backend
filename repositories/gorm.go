@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"discusiin/dto"
 	"discusiin/models"
 
 	"gorm.io/gorm"
@@ -102,7 +103,16 @@ func (db GormSql) GetAllTopics() ([]models.Topic, error) {
 		}
 	}
 }
+func (db GormSql) GetTopTopics() ([]dto.TopTopics, error) {
 
+	var results []dto.TopTopics
+
+	err := db.DB.Table("posts").Select("topic_id, COUNT(*) as post_count").Group("topic_id").Order("post_count DESC").Limit(3).Scan(&results).Error
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
 func (db GormSql) GetTopicByName(name string) (models.Topic, error) {
 	var topic models.Topic
 	err := db.DB.Where("name = ?", name).First(&topic).Error

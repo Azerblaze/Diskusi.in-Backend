@@ -9,8 +9,8 @@ type Moderator struct {
 	UserID  int `json:"userId" form:"userId"`
 	TopicID int `json:"topicId" form:"topicId"`
 
-	User  User
-	Topic Topic
+	User  User  `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Topic Topic `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Moderator) TableName() string {
