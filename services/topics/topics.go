@@ -61,6 +61,7 @@ func (t *topicServices) GetTopTopics() ([]dto.TopTopics, error) {
 			return nil, err
 		}
 		topTopics[i].TopicName = Topic.Name
+		topTopics[i].TopicDescription = Topic.Description
 	}
 	return topTopics, nil
 }
