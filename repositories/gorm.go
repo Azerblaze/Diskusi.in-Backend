@@ -107,7 +107,7 @@ func (db GormSql) GetTopTopics() ([]dto.TopTopics, error) {
 
 	var results []dto.TopTopics
 
-	err := db.DB.Table("posts").Select("topic_id, COUNT(*) as post_count").Group("topic_id").Order("post_count DESC").Scan(&results).Error
+	err := db.DB.Table("posts").Select("topic_id, COUNT(*) as post_count").Group("topic_id").Order("post_count DESC").Limit(3).Scan(&results).Error
 	if err != nil {
 		return nil, err
 	}
