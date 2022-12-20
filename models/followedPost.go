@@ -9,8 +9,8 @@ type FollowedPost struct {
 	UserID int `json:"userId" form:"userId"`
 	PostID int `json:"postId" form:"postId"`
 
-	User User `json:"user" form:"user"`
-	Post Post `json:"post" form:"post"`
+	User User `json:"user" form:"user" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Post Post `json:"post" form:"post" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (FollowedPost) TableName() string {

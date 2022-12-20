@@ -10,8 +10,8 @@ type Reply struct {
 	CommentID int    `json:"commentId" form:"commentId"`
 	Body      string `json:"body" form:"body"`
 
-	User    User
-	Comment Comment
+	User    User    `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Comment Comment `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Reply) TableName() string {

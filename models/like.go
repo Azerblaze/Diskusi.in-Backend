@@ -11,8 +11,8 @@ type Like struct {
 	IsLike    bool `json:"isLike" form:"isLike"`
 	IsDislike bool `json:"isDislike" form:"isDislike"`
 
-	User User
-	Post Post
+	User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Post Post `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Like) TableName() string {

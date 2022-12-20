@@ -11,8 +11,8 @@ type Comment struct {
 	Body       string `json:"body" form:"body"`
 	IsFollowed bool   `json:"isFollowed" form:"isFollowed"`
 
-	User User
-	Post Post
+	User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Post Post `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Comment) TableName() string {
