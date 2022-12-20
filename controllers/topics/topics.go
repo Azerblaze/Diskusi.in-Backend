@@ -118,7 +118,7 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 
 	// is description to short
 	if len(newTopic.Description) < 25 {
-		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least cpntain 25 character")
+		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least contain 25 character")
 	}
 
 	newTopic.ID = uint(id)

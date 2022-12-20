@@ -165,6 +165,9 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 		}
 	}
 
+	//update topic
+	topic.Description = newTopic.Description
+
 	err := t.IDatabase.SaveTopic(topic)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
