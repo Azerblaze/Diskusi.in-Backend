@@ -78,7 +78,7 @@ func (db GormSql) UpdateProfile(user models.User) error {
 	return nil
 }
 func (db GormSql) DeleteUser(userId int) error {
-	err := db.DB.Delete(&models.User{}, userId).Error
+	err := db.DB.Unscoped().Delete(&models.User{}, userId).Error
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func (db GormSql) SaveTopic(topic models.Topic) error {
 }
 
 func (db GormSql) RemoveTopic(id int) error {
-	err := db.DB.Delete(&models.Topic{}, id).Error
+	err := db.DB.Unscoped().Delete(&models.Topic{}, id).Error
 	if err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func (db GormSql) SavePost(post models.Post) error {
 }
 
 func (db GormSql) DeletePostByPostID(id int) error {
-	err := db.DB.Where("id = ?", id).Delete(&models.Post{}).Error
+	err := db.DB.Unscoped().Where("id = ?", id).Delete(&models.Post{}).Error
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func (db GormSql) DeletePostByPostID(id int) error {
 	return nil
 }
 func (db GormSql) DeletePostByUserID(userID int) error {
-	err := db.DB.Where("user_id = ?", userID).Delete(&models.Post{}).Error
+	err := db.DB.Unscoped().Where("user_id = ?", userID).Delete(&models.Post{}).Error
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func (db GormSql) SaveComment(comment models.Comment) error {
 }
 
 func (db GormSql) DeleteComment(co int) error {
-	err := db.DB.Delete(&models.Comment{}, co).Error
+	err := db.DB.Unscoped().Delete(&models.Comment{}, co).Error
 	if err != nil {
 		return err
 	}
@@ -386,7 +386,7 @@ func (db GormSql) SaveReply(reply models.Reply) error {
 }
 
 func (db GormSql) DeleteReply(re int) error {
-	err := db.DB.Delete(&models.Reply{}, re).Error
+	err := db.DB.Unscoped().Delete(&models.Reply{}, re).Error
 	if err != nil {
 		return err
 	}
