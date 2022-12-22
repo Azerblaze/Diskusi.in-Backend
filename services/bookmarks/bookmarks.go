@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewBookmarkServices(db repositories.IDatabase) IBookmarkServices {
@@ -29,7 +30,7 @@ func (b *bookmarkServices) AddBookmark(token dto.Token, postID int) error {
 	//check post if exist
 	post, err := b.IDatabase.GetPostById(postID)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -39,7 +40,7 @@ func (b *bookmarkServices) AddBookmark(token dto.Token, postID int) error {
 	//check if bookmark exist
 	_, err = b.IDatabase.GetBookmarkByUserIDAndPostID(int(token.ID), int(post.ID))
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			//insert to empty bookmark field
 			newBookmark.UserID = int(token.ID)
 			newBookmark.PostID = int(post.ID)
@@ -64,7 +65,7 @@ func (b *bookmarkServices) DeleteBookmark(token dto.Token, bookmarkID int) error
 	//check if bookmark exist
 	_, err := b.IDatabase.GetBookmarkByBookmarkID(bookmarkID)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewPostServices(db repositories.IDatabase) IPostServices {
@@ -35,7 +36,7 @@ func (p *postServices) CreatePost(post models.Post, name string, token dto.Token
 	//find topic
 	topic, err := p.IDatabase.GetTopicByName(name)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "topic not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -64,7 +65,7 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 	//find topic
 	topic, err := p.IDatabase.GetTopicByName(name)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "topic not found")
 		}
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -132,7 +133,7 @@ func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.Publi
 	//find topic
 	topic, err := p.IDatabase.GetTopicByName(name)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "topic not found")
 		}
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -199,7 +200,7 @@ func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.Publi
 func (p *postServices) GetPost(id int) (dto.PublicPost, error) {
 	post, err := p.IDatabase.GetPostById(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return dto.PublicPost{}, echo.NewHTTPError(http.StatusNotFound, "post not found")
 		} else {
 			return dto.PublicPost{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -239,7 +240,7 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 	//get previous post
 	post, err := p.IDatabase.GetPostById(postID)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -271,7 +272,7 @@ func (p *postServices) DeletePost(id int, token dto.Token) error {
 	//find post
 	post, err := p.IDatabase.GetPostById(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -306,7 +307,7 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 
 	posts, err := p.IDatabase.GetRecentPost(page, search)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -370,7 +371,7 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 
 	posts, err := p.IDatabase.GetAllPostByLike(page)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -440,7 +441,7 @@ func (p *postServices) SuspendPost(token dto.Token, postId int) error {
 	//find post
 	post, errGetPostById := p.IDatabase.GetPostById(postId)
 	if errGetPostById != nil {
-		if errGetPostById.Error() == "record not found" {
+		if errGetPostById == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, errGetPostById.Error())

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewUserServices(db repositories.IDatabase) IUserServices {
@@ -55,10 +56,10 @@ func (s *userServices) Register(user models.User) error {
 
 	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
 	if errCheckUsername != nil {
-		if errCheckUsername.Error() == "record not found" {
+		if errCheckUsername == gorm.ErrRecordNotFound {
 			_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
 			if errCheckEmail != nil {
-				if errCheckEmail.Error() == "record not found" {
+				if errCheckEmail == gorm.ErrRecordNotFound {
 					err := s.IDatabase.SaveNewUser(client)
 					if err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -105,10 +106,10 @@ func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 
 	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
 	if errCheckUsername != nil {
-		if errCheckUsername.Error() == "record not found" {
+		if errCheckUsername == gorm.ErrRecordNotFound {
 			_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
 			if errCheckEmail != nil {
-				if errCheckEmail.Error() == "record not found" {
+				if errCheckEmail == gorm.ErrRecordNotFound {
 					err := s.IDatabase.SaveNewUser(client)
 					if err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -131,7 +132,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 
 	data, err := s.IDatabase.GetUserByEmail(user.Email)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "Email or Password incorrect")
 		}
 		return dto.Login{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -178,7 +179,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dto.PublicUser, int, error) {
 	u, errGetUserByUsername := s.IDatabase.GetUserByUsername(token.Username)
 	if errGetUserByUsername != nil {
-		if errGetUserByUsername.Error() == "record not found" {
+		if errGetUserByUsername == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
 		} else {
 			return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
@@ -219,7 +220,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
 	user, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
-		if errGetProfile.Error() == "record not found" {
+		if errGetProfile == gorm.ErrRecordNotFound {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
 		} else {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
@@ -241,7 +242,7 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 	//get old profile
 	oldProfile, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
-		if errGetProfile.Error() == "record not found" {
+		if errGetProfile == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
@@ -302,7 +303,7 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	//check user
 	user, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
-		if errUser.Error() == "record not found" {
+		if errUser == gorm.ErrRecordNotFound {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
@@ -367,7 +368,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	//check user
 	user, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
-		if errUser.Error() == "record not found" {
+		if errUser == gorm.ErrRecordNotFound {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
@@ -509,7 +510,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (d
 	//check if user exist
 	oldUser, errUser := s.IDatabase.GetUserById(userId)
 	if errUser != nil {
-		if errUser.Error() == "record not found" {
+		if errUser == gorm.ErrRecordNotFound {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())

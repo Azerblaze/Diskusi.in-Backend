@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewReplyServices(db repositories.IDatabase) IReplyServices {
@@ -28,7 +29,7 @@ func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 	//get comment
 	comment, err := r.IDatabase.GetCommentById(co)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -51,7 +52,7 @@ func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 func (r *replyServices) GetAllReply(commentId int) ([]dto.PublicReply, error) {
 	replies, err := r.IDatabase.GetAllReplyByComment(commentId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 		} else {
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -79,7 +80,7 @@ func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dt
 	//find reply
 	reply, err := r.IDatabase.GetReplyById(replyId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Reply not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -108,7 +109,7 @@ func (r *replyServices) DeleteReply(replyId int, token dto.Token) error {
 	//find reply
 	reply, err := r.IDatabase.GetReplyById(replyId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Reply not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

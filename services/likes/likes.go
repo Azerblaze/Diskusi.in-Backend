@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewLikeServices(db repositories.IDatabase) ILikeServices {
@@ -28,7 +29,7 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 	//cek jika post ada
 	post, err := l.IDatabase.GetPostById(postId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -40,7 +41,7 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 	//cek jika like ada
 	oldLike, err := l.IDatabase.GetLikeByUserAndPostId(int(token.ID), postId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			//jika tidak ada
 			like.UserID = int(token.ID)
 			like.PostID = postId
@@ -105,7 +106,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 	// cek jika post ada
 	post, err := l.IDatabase.GetPostById(postId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -117,7 +118,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 	//cek jika like ada
 	oldLike, err := l.IDatabase.GetLikeByUserAndPostId(int(token.ID), postId)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			//jika tidak ada
 			like.UserID = int(token.ID)
 			like.PostID = postId

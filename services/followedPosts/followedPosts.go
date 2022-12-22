@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewFollowedPostServices(db repositories.IDatabase) IFollowedPostServices {
@@ -30,7 +31,7 @@ func (b *followedPostServices) AddFollowedPost(token dto.Token, postID int) erro
 	//check post if exist
 	post, err := b.IDatabase.GetPostById(postID)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -40,7 +41,7 @@ func (b *followedPostServices) AddFollowedPost(token dto.Token, postID int) erro
 	//check if followedPost exist
 	_, err = b.IDatabase.GetFollowedPost(int(token.ID), int(post.ID))
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			//insert to empty followedPost field
 			newFollowedPost.UserID = int(token.ID)
 			newFollowedPost.PostID = int(post.ID)
@@ -63,7 +64,7 @@ func (b *followedPostServices) DeleteFollowedPost(token dto.Token, postID int) e
 	//check post if needed
 	post, err := b.IDatabase.GetPostById(postID)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -73,7 +74,7 @@ func (b *followedPostServices) DeleteFollowedPost(token dto.Token, postID int) e
 	//check if followedPost exist
 	followedPost, err := b.IDatabase.GetFollowedPost(int(token.ID), int(post.ID))
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "You are not following this post")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

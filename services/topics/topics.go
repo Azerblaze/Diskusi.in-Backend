@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewTopicServices(db repositories.IDatabase) ITopicServices {
@@ -32,7 +33,7 @@ func (t *topicServices) GetTopics() ([]models.Topic, error) {
 	//get all topics
 	topics, err := t.IDatabase.GetAllTopics()
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
 			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -69,7 +70,7 @@ func (t *topicServices) GetNumberOfPostOnATopicByTopicName(topicName string) (in
 	//get all topics
 	postCount, err := t.IDatabase.CountNumberOfPostByTopicName(topicName)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			err := echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 			if err == nil {
 				panic("unexpected nil error")
@@ -90,7 +91,7 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 	// isAdmin?
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
-		if errGetUser.Error() == "record not found" {
+		if errGetUser == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
@@ -104,7 +105,7 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 	// isExist?
 	_, errGetTopicByName := t.IDatabase.GetTopicByName(topic.Name)
 	if errGetTopicByName != nil {
-		if errGetTopicByName.Error() == "record not found" {
+		if errGetTopicByName == gorm.ErrRecordNotFound {
 			errSaveNewTopic := t.IDatabase.SaveNewTopic(topic)
 			if errSaveNewTopic != nil {
 				return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errSaveNewTopic.Error())
@@ -126,7 +127,7 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 func (t *topicServices) GetTopic(id int) (models.Topic, error) {
 	topic, err := t.IDatabase.GetTopicByID(id)
 	if err != nil {
-		if err.Error() == "record not found" {
+		if err == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
 			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -139,7 +140,7 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 	// isAdmin?
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
-		if errGetUser.Error() == "record not found" {
+		if errGetUser == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "user not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
@@ -161,7 +162,7 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 	//check user
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
-		if errGetUser.Error() == "record not found" {
+		if errGetUser == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
@@ -173,7 +174,7 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 
 	topic, errGetTopic := t.IDatabase.GetTopicByID(id)
 	if errGetTopic != nil {
-		if errGetTopic.Error() == "record not found" {
+		if errGetTopic == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
 			return echo.NewHTTPError(http.StatusInternalServerError, errGetTopic.Error())
@@ -192,7 +193,7 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 
 	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
-		if errGetUser.Error() == "record not found" {
+		if errGetUser == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
 		} else {
 			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
@@ -204,7 +205,7 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 
 	topic, errGetTopicByID := t.IDatabase.GetTopicByID(int(newTopic.ID))
 	if errGetTopicByID != nil {
-		if errGetTopicByID.Error() == "record not found" {
+		if errGetTopicByID == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
 		} else {
 			return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errGetTopicByID.Error())
