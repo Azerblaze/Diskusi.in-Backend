@@ -93,16 +93,22 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 	//endpoints users
 	users := v1.Group("/users")
 	users.GET("", uHandler.GetUsersAdminNotIncluded, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.GET("/profile", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/:userId/post", uHandler.GetPostByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/:userId/comment", uHandler.GetCommentByUserIdForAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.GET("/post", uHandler.GetPostByUserIdAsUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	users.POST("/register", uHandler.Register)
-	users.POST("/register/admin", uHandler.RegisterAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.POST("/login", uHandler.Login)
-	users.PUT("/profile/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.PUT("/:userId/ban", uHandler.BanUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	users.DELETE("/:userId", uHandler.DeleteUser, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+
+	//register endpoint
+	register := users.Group("/register")
+	register.POST("", uHandler.Register)
+	register.POST("/admin", uHandler.RegisterAdmin, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+
+	//profile endpoint
+	profile := users.Group("/profile")
+	profile.GET("", uHandler.GetProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	profile.PUT("/edit", uHandler.UpdateProfile, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoints topics
 	topics := v1.Group("/topics")
@@ -116,15 +122,21 @@ func InitRoute(payload *routes.Payload) (*echo.Echo, io.Closer) {
 
 	//endpoints posts
 	posts := v1.Group("/posts")
-	posts.GET("/all/:topicName", pHandler.GetAllPostByTopicName, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/all/:topicName/top", pHandler.GetAllPostByTopicByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/recents", pHandler.GetAllRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
-	posts.GET("/recents/top", pHandler.GetAllPostSortByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.GET("/:postId", pHandler.GetPostByPostID, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.POST("/create/:topicName", pHandler.CreateNewPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/:postId/suspend", pHandler.SuspendPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.PUT("/edit/:postId", pHandler.EditPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 	posts.DELETE("/delete/:postId", pHandler.DeletePost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+
+	//get all recent post endpoint
+	recents := posts.Group("/recents")
+	recents.GET("", pHandler.GetAllRecentPost, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	recents.GET("/top", pHandler.GetAllPostSortByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+
+	//get all post by topic endpoint
+	all := posts.Group("/all")
+	all.GET("/:topicName", pHandler.GetAllPostByTopicName, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
+	all.GET("/:topicName/top", pHandler.GetAllPostByTopicByLike, middleware.JWT([]byte(configs.Cfg.TokenSecret)))
 
 	//endpoint followedPost
 	followedPosts := posts.Group("/followed-posts")
