@@ -21,7 +21,7 @@ func (h *BookmarkHandler) AddBookmark(c echo.Context) error {
 	}
 
 	//get postId
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postID, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -45,7 +45,7 @@ func (h *BookmarkHandler) DeleteBookmark(c echo.Context) error {
 	}
 
 	//get bookmarkID
-	bookmarkID, errAtoi := strconv.Atoi(c.Param("bookmark_id"))
+	bookmarkID, errAtoi := strconv.Atoi(c.Param("bookmarkId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

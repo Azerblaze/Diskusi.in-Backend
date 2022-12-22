@@ -518,8 +518,8 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (d
 
 	//user variabel ban to store how long ban wil last
 	ban := user.BanUntil
-	const DAY_IN_UNIX_MILLISECOND = 86400000
-	user.BanUntil = int(time.Now().UnixMilli()) + (DAY_IN_UNIX_MILLISECOND * ban)
+	const DayInUnixMillisecond = 86400000
+	user.BanUntil = int(time.Now().UnixMilli()) + (DayInUnixMillisecond * ban)
 
 	//update user
 	oldUser.BanUntil = user.BanUntil

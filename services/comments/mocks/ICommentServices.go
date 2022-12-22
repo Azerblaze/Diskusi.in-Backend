@@ -14,13 +14,13 @@ type ICommentServices struct {
 	mock.Mock
 }
 
-// CreateComment provides a mock function with given fields: comment, post_id, token
-func (_m *ICommentServices) CreateComment(comment models.Comment, post_id int, token dto.Token) error {
-	ret := _m.Called(comment, post_id, token)
+// CreateComment provides a mock function with given fields: comment, postID, token
+func (_m *ICommentServices) CreateComment(comment models.Comment, postID int, token dto.Token) error {
+	ret := _m.Called(comment, postID, token)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(models.Comment, int, dto.Token) error); ok {
-		r0 = rf(comment, post_id, token)
+		r0 = rf(comment, postID, token)
 	} else {
 		r0 = ret.Error(0)
 	}

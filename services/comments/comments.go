@@ -14,7 +14,7 @@ func NewCommentServices(db repositories.IDatabase) ICommentServices {
 }
 
 type ICommentServices interface {
-	CreateComment(comment models.Comment, post_id int, token dto.Token) error
+	CreateComment(comment models.Comment, postID int, token dto.Token) error
 	GetAllComments(id int) ([]dto.PublicComment, error)
 	UpdateComment(newComment models.Comment, token dto.Token) error
 	DeleteComment(commentID int, token dto.Token) error
