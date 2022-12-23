@@ -236,7 +236,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 }
 
 func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
-	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -274,7 +274,7 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 }
 
 func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
-	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
