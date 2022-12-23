@@ -62,27 +62,43 @@ func (p *Payload) InitRepo() {
 
 func (p *Payload) InitUserRepo() {
 	p.userRepo = userGormRepo.NewGorm(p.DBGorm)
+	p.commentRepo = commentGormRepo.NewGorm(p.DBGorm)
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitTopicRepo() {
+	p.userRepo = userGormRepo.NewGorm(p.DBGorm)
 	p.topicRepo = topicGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitPostRepo() {
 	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
+	p.topicRepo = topicGormRepo.NewGorm(p.DBGorm)
+	p.userRepo = userGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitCommentRepo() {
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
+	p.userRepo = userGormRepo.NewGorm(p.DBGorm)
 	p.commentRepo = commentGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitReplyRepo() {
+	p.commentRepo = commentGormRepo.NewGorm(p.DBGorm)
 	p.replyRepo = replyGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitLikeRepo() {
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
 	p.likeRepo = likeGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitBookmarkRepo() {
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
 	p.bookmarkRepo = bookmarkGormRepo.NewGorm(p.DBGorm)
 }
 func (p *Payload) InitFollowedPostRepo() {
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
 	p.followedPostRepo = followedPostGormRepo.NewGorm(p.DBGorm)
+}
+func (p *Payload) InitDashboardRepo() {
+	p.postRepo = postGormRepo.NewGorm(p.DBGorm)
+	p.topicRepo = topicGormRepo.NewGorm(p.DBGorm)
+	p.userRepo = userGormRepo.NewGorm(p.DBGorm)
 }
 
 // User -----------------------------------------------------------------------------------------------------------------
@@ -94,7 +110,7 @@ func (p *Payload) GetUserServices() uService.IUserServices {
 	return p.userService
 }
 func (p *Payload) InitUserService() {
-	if p.userRepo == nil {
+	if p.userRepo == nil || p.commentRepo == nil || p.postRepo == nil {
 		p.InitUserRepo()
 	}
 
@@ -111,7 +127,7 @@ func (p *Payload) GetTopicServices() tService.ITopicServices {
 	return p.topicService
 }
 func (p *Payload) InitTopicService() {
-	if p.topicRepo == nil {
+	if p.topicRepo == nil || p.userRepo == nil {
 		p.InitTopicRepo()
 	}
 
@@ -129,7 +145,7 @@ func (p *Payload) GetPostServices() pService.IPostServices {
 }
 
 func (p *Payload) InitPostService() {
-	if p.postRepo == nil {
+	if p.postRepo == nil || p.topicRepo == nil || p.userRepo == nil {
 		p.InitPostRepo()
 	}
 
@@ -146,7 +162,7 @@ func (p *Payload) GetCommentServices() cService.ICommentServices {
 	return p.cService
 }
 func (p *Payload) InitCommentService() {
-	if p.commentRepo == nil {
+	if p.commentRepo == nil || p.postRepo == nil || p.userRepo == nil {
 		p.InitCommentRepo()
 	}
 
@@ -163,7 +179,7 @@ func (p *Payload) GetReplyServices() rService.IReplyServices {
 	return p.rService
 }
 func (p *Payload) InitReplyService() {
-	if p.replyRepo == nil {
+	if p.replyRepo == nil || p.commentRepo == nil {
 		p.InitReplyRepo()
 	}
 
@@ -180,7 +196,7 @@ func (p *Payload) GetLikeServices() lService.ILikeServices {
 	return p.lService
 }
 func (p *Payload) InitLikeService() {
-	if p.likeRepo == nil {
+	if p.likeRepo == nil || p.postRepo == nil {
 		p.InitLikeRepo()
 	}
 
@@ -197,7 +213,7 @@ func (p *Payload) GetBookmarkServices() bService.IBookmarkServices {
 	return p.bService
 }
 func (p *Payload) InitBookmarkService() {
-	if p.bookmarkRepo == nil {
+	if p.bookmarkRepo == nil || p.postRepo == nil {
 		p.InitBookmarkRepo()
 	}
 
@@ -214,7 +230,7 @@ func (p *Payload) GetFollowedPostServices() fService.IFollowedPostServices {
 	return p.fService
 }
 func (p *Payload) InitFollowedPostService() {
-	if p.followedPostRepo == nil {
+	if p.followedPostRepo == nil || p.postRepo == nil {
 		p.InitFollowedPostRepo()
 	}
 
@@ -230,7 +246,7 @@ func (p *Payload) GetDashboardServices() dService.IDashboardServices {
 	return p.dService
 }
 func (p *Payload) InitDashboardService() {
-	if p.postRepo == nil {
+	if p.postRepo == nil || p.topicRepo == nil || p.userRepo == nil {
 		p.InitPostRepo()
 	}
 
