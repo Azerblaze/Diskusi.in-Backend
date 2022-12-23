@@ -17,6 +17,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const DayInUnixMillisecond = 86400000
+
 func NewUserServices(userRepo repositories.IUserRepository, commentRepo repositories.ICommentRepository, postRepo repositories.IPostRepository) IUserServices {
 	return &userServices{IUserRepository: userRepo, ICommentRepository: commentRepo, IPostRepository: postRepo}
 }
@@ -158,7 +160,7 @@ func (s *userServices) Login(request models.User) (dto.Login, error) {
 	//check if user are not banned
 	if data.BanUntil > int(time.Now().UnixMilli()) {
 		banLeft := data.BanUntil - int(time.Now().UnixMilli())
-		ban = banLeft / 86400000
+		ban = banLeft / DayInUnixMillisecond
 
 		//jika ban kurang dari 24 jam
 		if ban < 1 {
@@ -511,8 +513,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (d
 
 	//user variabel ban to store how long ban wil last
 	ban := user.BanUntil
-	const DAY_IN_UNIX_MILLISECOND = 86400000
-	user.BanUntil = int(time.Now().UnixMilli()) + (DAY_IN_UNIX_MILLISECOND * ban)
+	user.BanUntil = int(time.Now().UnixMilli()) + (DayInUnixMillisecond * ban)
 
 	//update user
 	oldUser.BanUntil = user.BanUntil
