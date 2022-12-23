@@ -26,9 +26,9 @@ func (h *DashboardHandler) GetTotalCountOfUserAndTopicAndPost(c echo.Context) er
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":     "Success",
-		"user_total":  userCount,
-		"topic_total": topicCount,
-		"post_total":  postCount,
+		"message":    "Success",
+		"userTotal":  userCount,
+		"topicTotal": topicCount,
+		"postTotal":  postCount,
 	})
 }
