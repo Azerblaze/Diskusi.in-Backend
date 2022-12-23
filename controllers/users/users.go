@@ -215,7 +215,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 }
 
 func (h *UserHandler) DeleteUser(c echo.Context) error {
-	userID, errAtoi := strconv.Atoi(c.Param("user-id"))
+	userID, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -353,7 +353,7 @@ func (h *UserHandler) BanUser(c echo.Context) error {
 	}
 
 	//get user id from param
-	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
