@@ -21,16 +21,16 @@ func (h *FollowedPostHandler) AddFollowedPost(c echo.Context) error {
 	}
 
 	//get postId
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id should not be empty")
+	if c.Param("postId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "postId should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
 	//add followedPost
-	err := h.IFollowedPostServices.AddFollowedPost(token, postID)
+	err := h.IFollowedPostServices.AddFollowedPost(token, postId)
 	if err != nil {
 		return err
 	}
@@ -48,16 +48,16 @@ func (h *FollowedPostHandler) DeleteFollowedPost(c echo.Context) error {
 	}
 
 	//get postId
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id should not be empty")
+	if c.Param("postId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "postId should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
 	//delete followedPost
-	err := h.IFollowedPostServices.DeleteFollowedPost(token, postID)
+	err := h.IFollowedPostServices.DeleteFollowedPost(token, postId)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func (h *FollowedPostHandler) GetAllFollowedPost(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Success",
 		"data":    followedPosts,
 	})

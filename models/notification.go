@@ -12,8 +12,8 @@ type Notification struct {
 	Category    string `json:"category" form:"category"`
 	Description string `json:"description" form:"description"`
 
-	User User
-	Post Post
+	User User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Post Post `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Notification) TableName() string {

@@ -32,10 +32,10 @@ func (h *ReplyHandler) CreateReply(c echo.Context) error {
 	}
 
 	//get comment id
-	if c.Param("comment_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "comment_id should not be empty")
+	if c.Param("commentId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "commentId should not be empty")
 	}
-	commentId, errAtoi := strconv.Atoi(c.Param("comment_id"))
+	commentId, errAtoi := strconv.Atoi(c.Param("commentId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -50,12 +50,12 @@ func (h *ReplyHandler) CreateReply(c echo.Context) error {
 	})
 }
 
-func (h *ReplyHandler) GetAllReply(c echo.Context) error {
+func (h *ReplyHandler) GetAllReplyByCommentID(c echo.Context) error {
 	//get comment id
-	if c.Param("comment_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "comment_id should not be empty")
+	if c.Param("commentId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "commentId should not be empty")
 	}
-	commentId, errAtoi := strconv.Atoi(c.Param("comment_id"))
+	commentId, errAtoi := strconv.Atoi(c.Param("commentId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -86,10 +86,10 @@ func (h *ReplyHandler) UpdateReply(c echo.Context) error {
 	}
 
 	//get reply id
-	if c.Param("reply_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "reply_id should not be empty")
+	if c.Param("replyId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "replyId should not be empty")
 	}
-	replyId, errAtoi := strconv.Atoi(c.Param("reply_id"))
+	replyId, errAtoi := strconv.Atoi(c.Param("replyId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -113,10 +113,10 @@ func (h *ReplyHandler) DeleteReply(c echo.Context) error {
 	}
 
 	//get reply id
-	if c.Param("reply_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "reply_id should not be empty")
+	if c.Param("replyId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "replyId should not be empty")
 	}
-	replyId, errAtoi := strconv.Atoi(c.Param("reply_id"))
+	replyId, errAtoi := strconv.Atoi(c.Param("replyId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

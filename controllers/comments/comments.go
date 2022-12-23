@@ -18,7 +18,7 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 	var comment models.Comment
 	errBind := c.Bind(&comment)
 	if errBind != nil {
-		echo.NewHTTPError(http.StatusUnsupportedMediaType, errBind.Error())
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, errBind.Error())
 	}
 
 	//get logged userId
@@ -27,12 +27,12 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	err := h.ICommentServices.CreateComment(comment, postID, token)
+	err := h.ICommentServices.CreateComment(comment, postId, token)
 	if err != nil {
 		return err
 	}
@@ -43,18 +43,18 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 
 }
 
-func (h *CommentHandler) GetAllComment(c echo.Context) error {
+func (h *CommentHandler) GetAllCommentByPostID(c echo.Context) error {
 
 	//get post id
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id should not be empty")
+	if c.Param("postId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "postId should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 	//get all coment from post
-	comments, err := h.ICommentServices.GetAllComments(postID)
+	comments, err := h.ICommentServices.GetAllComments(postId)
 	if err != nil {
 		return err
 	}
@@ -82,15 +82,15 @@ func (h *CommentHandler) UpdateComment(c echo.Context) error {
 	}
 
 	//check if user who eligible untuk param comment
-	if c.Param("comment_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "comment_id should not be empty")
+	if c.Param("commentId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "commentId should not be empty")
 	}
-	commentID, errAtoi := strconv.Atoi(c.Param("comment_id"))
+	commentId, errAtoi := strconv.Atoi(c.Param("commentId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	comment.ID = uint(commentID)
+	comment.ID = uint(commentId)
 
 	err := h.ICommentServices.UpdateComment(comment, token)
 	if err != nil {
@@ -111,14 +111,14 @@ func (h *CommentHandler) DeleteComment(c echo.Context) error {
 	}
 
 	//check if user who eligible
-	if c.Param("comment_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "comment_id should not be empty")
+	if c.Param("commentId") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "commentId should not be empty")
 	}
-	commentID, errAtoi := strconv.Atoi(c.Param("comment_id"))
+	commentId, errAtoi := strconv.Atoi(c.Param("commentId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
-	err := h.ICommentServices.DeleteComment(commentID, token)
+	err := h.ICommentServices.DeleteComment(commentId, token)
 	if err != nil {
 		return err
 	}

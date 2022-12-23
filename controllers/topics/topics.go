@@ -38,6 +38,11 @@ func (h *TopicHandler) CreateNewTopic(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "description name should not be empty")
 	}
 
+	// is description to short
+	if len(topic.Description) < 25 {
+		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least cpntain 25 character")
+	}
+
 	result, err := h.ITopicServices.CreateTopic(topic, token)
 	if err != nil {
 		return err
@@ -48,7 +53,36 @@ func (h *TopicHandler) CreateNewTopic(c echo.Context) error {
 		"data":    result,
 	})
 }
+func (h *TopicHandler) GetNumberOfPostOnATopicByTopicName(c echo.Context) error {
+	topicName := c.Param("topicName")
+	if topicName == "" {
+		err := echo.NewHTTPError(http.StatusBadRequest, "topicName should not be empty")
+		if err == nil {
+			panic("unexpected nil error")
+		}
+		return err
+	}
 
+	numberOfPost, err := h.ITopicServices.GetNumberOfPostOnATopicByTopicName(topicName)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Success",
+		"data":    numberOfPost,
+	})
+}
+func (h *TopicHandler) GetTopTopics(c echo.Context) error {
+	topics, err := h.ITopicServices.GetTopTopics()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "Success",
+		"data":    topics,
+	})
+}
 func (h *TopicHandler) GetAllTopics(c echo.Context) error {
 	topics, err := h.ITopicServices.GetTopics()
 	if err != nil {
@@ -63,16 +97,16 @@ func (h *TopicHandler) GetAllTopics(c echo.Context) error {
 
 func (h *TopicHandler) GetTopic(c echo.Context) error {
 
-	topic_idStr := c.Param("topic_id")
-	if topic_idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+	topicIdStr := c.Param("topicId")
+	if topicIdStr == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "topicId should not be empty")
 	}
-	topic_id, errAtoi := strconv.Atoi(topic_idStr)
+	topicId, errAtoi := strconv.Atoi(topicIdStr)
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	topic, err := h.ITopicServices.GetTopic(topic_id)
+	topic, err := h.ITopicServices.GetTopic(topicId)
 	if err != nil {
 		return err
 	}
@@ -97,38 +131,54 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	idStr := c.Param("topic_id")
+	idStr := c.Param("topicId")
 	if idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "topicId should not be empty")
 	}
 	id, errAtoi := strconv.Atoi(idStr)
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
+	//is description empty
+	if newTopic.Description == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "description name should not be empty")
+	}
+
+	// is description to short
+	if len(newTopic.Description) < 25 {
+		return echo.NewHTTPError(http.StatusBadRequest, "description to short, at least contain 25 character")
+	}
+
 	newTopic.ID = uint(id)
 
-	err := h.ITopicServices.UpdateTopicDescription(newTopic, token)
+	topic, err := h.ITopicServices.UpdateTopicDescription(newTopic, token)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusCreated, map[string]interface{}{
 		"message": "Topic updated",
+		"data":    topic,
 	})
 }
 
 func (h *TopicHandler) DeleteTopic(c echo.Context) error {
-	idStr := c.Param("topic_id")
+	idStr := c.Param("topicId")
 	if idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "topicId should not be empty")
 	}
 	id, errAtoi := strconv.Atoi(idStr)
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	err := h.ITopicServices.RemoveTopic(id)
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	err := h.ITopicServices.RemoveTopic(token, id)
 	if err != nil {
 		return err
 	}

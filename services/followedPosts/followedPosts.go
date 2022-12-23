@@ -4,13 +4,15 @@ import (
 	"discusiin/dto"
 	"discusiin/models"
 	"discusiin/repositories"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
-func NewFollowedPostServices(db repositories.IDatabase) IFollowedPostServices {
-	return &followedPostServices{IDatabase: db}
+func NewFollowedPostServices(postRepo repositories.IPostRepository, followedPostRepo repositories.IFollowedPostRepository) IFollowedPostServices {
+	return &followedPostServices{IPostRepository: postRepo, IFollowedPostRepository: followedPostRepo}
 }
 
 type IFollowedPostServices interface {
@@ -20,37 +22,34 @@ type IFollowedPostServices interface {
 }
 
 type followedPostServices struct {
-	repositories.IDatabase
+	repositories.IPostRepository
+	repositories.IFollowedPostRepository
 }
 
 func (b *followedPostServices) AddFollowedPost(token dto.Token, postID int) error {
 	var newFollowedPost models.FollowedPost
 
 	//check post if exist
-	post, err := b.IDatabase.GetPostById(postID)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	post, err := b.IPostRepository.GetPostById(postID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//check if followedPost exist
-	_, err = b.IDatabase.GetFollowedPost(int(token.ID), int(post.ID))
-	if err != nil {
-		if err.Error() == "record not found" {
-			//insert to empty followedPost field
-			newFollowedPost.UserID = int(token.ID)
-			newFollowedPost.PostID = int(post.ID)
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	_, err = b.IFollowedPostRepository.GetFollowedPost(int(token.ID), int(post.ID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		//insert to empty followedPost field
+		newFollowedPost.UserID = int(token.ID)
+		newFollowedPost.PostID = int(post.ID)
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	} else {
 		return echo.NewHTTPError(http.StatusConflict, "Post has been followed")
 	}
 
-	err = b.IDatabase.SaveFollowedPost(newFollowedPost)
+	err = b.IFollowedPostRepository.SaveFollowedPost(newFollowedPost)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -60,27 +59,23 @@ func (b *followedPostServices) AddFollowedPost(token dto.Token, postID int) erro
 
 func (b *followedPostServices) DeleteFollowedPost(token dto.Token, postID int) error {
 	//check post if needed
-	post, err := b.IDatabase.GetPostById(postID)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	post, err := b.IPostRepository.GetPostById(postID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//check if followedPost exist
-	followedPost, err := b.IDatabase.GetFollowedPost(int(token.ID), int(post.ID))
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "You are not following this post")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	followedPost, err := b.IFollowedPostRepository.GetFollowedPost(int(token.ID), int(post.ID))
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "You are not following this post")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//delete followedPost
-	err = b.IDatabase.DeleteFollowedPost(int(followedPost.ID))
+	err = b.IFollowedPostRepository.DeleteFollowedPost(int(followedPost.ID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -90,27 +85,28 @@ func (b *followedPostServices) DeleteFollowedPost(token dto.Token, postID int) e
 
 func (b *followedPostServices) GetAllFollowedPost(token dto.Token) ([]dto.PublicFollowedPost, error) {
 	//get all followedPost
-	followedPosts, err := b.IDatabase.GetAllFollowedPost(int(token.ID))
+	followedPosts, err := b.IFollowedPostRepository.GetAllFollowedPost(int(token.ID))
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicFollowedPost
 	for _, followedPost := range followedPosts {
-		post, _ := b.IDatabase.GetPostById(int(followedPost.ID))
+		post, _ := b.IPostRepository.GetPostById(int(followedPost.PostID))
 		result = append(result, dto.PublicFollowedPost{
 			Model: followedPost.Model,
 			User: dto.FollowedPostUser{
-				UserID:   followedPost.UserID,
+				UserID:   post.UserID,
+				Photo:    post.User.Photo,
 				Username: post.User.Username,
 			},
 			Post: dto.FollowedPost{
-				PostID: followedPost.PostID,
-				Title:  followedPost.Post.Title,
-				Body:   followedPost.Post.Body,
+				PostID:    int(post.ID),
+				PostTopic: post.Topic.Name,
+				Title:     post.Title,
+				Body:      post.Body,
 			},
 		})
 	}
-
 	return result, nil
 }

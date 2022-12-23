@@ -13,10 +13,11 @@ type Post struct {
 	TopicID   int    `json:"topicId" form:"topicId"`
 	CreatedAt int    `json:"createdAt" form:"createdAt"`
 	IsActive  bool   `json:"isActive" form:"isActive"`
+	LikeCount int    `json:"likecount" form:"likecount"`
 
-	Comments []Comment
-	User     User  `json:"user"`
-	Topic    Topic `json:"topic"`
+	Comments []Comment `json:"comments" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	User     User      `json:"user" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Topic    Topic     `json:"topic" gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 func (Post) TableName() string {

@@ -5,11 +5,11 @@ import (
 )
 
 type Config struct {
-	DB_USER     string
-	DB_PASSWORD string
-	DB_HOST     string
-	DB_PORT     string
-	DB_NAME     string
+	DBUser      string
+	DBPassword  string
+	DBHost      string
+	DBPort      string
+	DBName      string
 	APIPort     string
 	APIKey      string
 	TokenSecret string

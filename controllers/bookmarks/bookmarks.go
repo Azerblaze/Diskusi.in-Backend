@@ -21,13 +21,13 @@ func (h *BookmarkHandler) AddBookmark(c echo.Context) error {
 	}
 
 	//get postId
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("postId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
 	//add bookmark
-	err := h.IBookmarkServices.AddBookmark(token, postID)
+	err := h.IBookmarkServices.AddBookmark(token, postId)
 	if err != nil {
 		return err
 	}
@@ -45,13 +45,13 @@ func (h *BookmarkHandler) DeleteBookmark(c echo.Context) error {
 	}
 
 	//get bookmarkID
-	bookmarkID, errAtoi := strconv.Atoi(c.Param("bookmark_id"))
+	bookmarkId, errAtoi := strconv.Atoi(c.Param("bookmarkId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
 	//delete bookmark
-	err := h.IBookmarkServices.DeleteBookmark(token, bookmarkID)
+	err := h.IBookmarkServices.DeleteBookmark(token, bookmarkId)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func (h *BookmarkHandler) GetAllBookmark(c echo.Context) error {
 		return err
 	}
 
-	return c.JSON(http.StatusCreated, echo.Map{
+	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Success",
 		"data":    bookmarks,
 	})

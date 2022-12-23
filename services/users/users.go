@@ -6,90 +6,86 @@ import (
 	"discusiin/middleware"
 	"discusiin/models"
 	"discusiin/repositories"
+	"errors"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
-func NewUserServices(db repositories.IDatabase) IUserServices {
-	return &userServices{IDatabase: db}
+const DayInUnixMillisecond = 86400000
+
+func NewUserServices(userRepo repositories.IUserRepository, commentRepo repositories.ICommentRepository, postRepo repositories.IPostRepository) IUserServices {
+	return &userServices{IUserRepository: userRepo, ICommentRepository: commentRepo, IPostRepository: postRepo}
 }
 
 type IUserServices interface {
 	Register(user models.User) error
 	RegisterAdmin(user models.User, token dto.Token) error
 	Login(user models.User) (dto.Login, error)
-	GetUsers(token dto.Token, page int) ([]dto.PublicUser, error)
+	GetUsersAdminNotIncluded(token dto.Token, page int) ([]dto.PublicUser, int, error)
 	GetProfile(token dto.Token, user models.User) (dto.PublicUser, error)
 	UpdateProfile(token dto.Token, user models.User) error
 	DeleteUser(token dto.Token, userId int) error
 	GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error)
+	GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error)
 	GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error)
-	BanUser(token dto.Token, userId int, user models.User) error
+	BanUser(token dto.Token, userId int, user models.User) (dto.PublicUser, error)
 }
 
 type userServices struct {
-	repositories.IDatabase
+	repositories.IUserRepository
+	repositories.ICommentRepository
+	repositories.IPostRepository
 }
 
-func (s *userServices) Register(user models.User) error {
-	var (
-		client        models.User
-		usernameTaken = true
-		emailTaken    = true
-	)
+func (s *userServices) Register(request models.User) error {
+	var user models.User
 
-	client.Username = strings.ToLower(user.Username)
-	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
-	if errCheckUsername != nil {
-		if errCheckUsername.Error() == "record not found" {
-			usernameTaken = false
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errCheckUsername.Error())
-		}
-	} else {
-		return echo.NewHTTPError(http.StatusConflict, "Username has been taken")
+	//check if user registered as admin
+	if request.IsAdmin {
+		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
-	if !usernameTaken {
-		client.Email = strings.ToLower(user.Email)
-		_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
-		if errCheckEmail != nil {
-			if errCheckEmail.Error() == "record not found" {
-				emailTaken = false
-			} else {
-				return echo.NewHTTPError(http.StatusInternalServerError, errCheckEmail.Error())
+	user.Username = strings.ToLower(request.Username)
+	user.Email = strings.ToLower(request.Email)
+	hashedPWD, errHashPassword := helper.HashPassword(request.Password)
+	if errHashPassword != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errHashPassword.Error())
+	}
+	user.Password = hashedPWD
+	user.IsAdmin = request.IsAdmin
+
+	_, errCheckUsername := s.IUserRepository.GetUserByUsername(user.Username)
+	if errors.Is(errCheckUsername, gorm.ErrRecordNotFound) {
+		_, errCheckEmail := s.IUserRepository.GetUserByEmail(user.Email)
+		if errors.Is(errCheckEmail, gorm.ErrRecordNotFound) {
+			err := s.IUserRepository.SaveNewUser(user)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
+		} else if errCheckEmail != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, errCheckEmail.Error())
 		} else {
 			return echo.NewHTTPError(http.StatusConflict, "Email has been used in another account")
 		}
+	} else if errCheckUsername != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errCheckUsername.Error())
+	} else {
+		return echo.NewHTTPError(http.StatusConflict, "Username has been taken")
 	}
-	//check if user registered as admin
-	if user.IsAdmin {
-		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
-	}
-	if !emailTaken {
-		hashedPWD, errHashPassword := helper.HashPassword(user.Password)
-		if errHashPassword != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, errHashPassword.Error())
-		}
-		client.Password = hashedPWD
-		client.IsAdmin = user.IsAdmin
-		err := s.IDatabase.SaveNewUser(client)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-	}
-
 	return nil
 }
 
-func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
+func (s *userServices) RegisterAdmin(request models.User, token dto.Token) error {
 	//check user
-	userAdmin, errGetUser := s.IDatabase.GetUserByUsername(token.Username)
-	if errGetUser != nil {
+	userAdmin, errGetUser := s.IUserRepository.GetUserByUsername(token.Username)
+	if errors.Is(errGetUser, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if errGetUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
 	}
 
@@ -98,63 +94,49 @@ func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
-	var (
-		client        models.User
-		usernameTaken = true
-		emailTaken    = true
-	)
+	var user models.User
 
-	client.Username = strings.ToLower(user.Username)
-	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
-	if errCheckUsername != nil {
-		if errCheckUsername.Error() == "record not found" {
-			usernameTaken = false
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errCheckUsername.Error())
-		}
-	} else {
-		return echo.NewHTTPError(http.StatusConflict, "Username has been taken")
+	user.Username = strings.ToLower(request.Username)
+	user.Email = strings.ToLower(request.Email)
+	hashedPWD, errHashPassword := helper.HashPassword(request.Password)
+	if errHashPassword != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errHashPassword.Error())
 	}
-	if !usernameTaken {
-		client.Email = strings.ToLower(user.Email)
-		_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
-		if errCheckEmail != nil {
-			if errCheckEmail.Error() == "record not found" {
-				emailTaken = false
-			} else {
-				return echo.NewHTTPError(http.StatusInternalServerError, errCheckEmail.Error())
+	user.Password = hashedPWD
+	user.IsAdmin = request.IsAdmin
+
+	_, errCheckUsername := s.IUserRepository.GetUserByUsername(user.Username)
+	if errors.Is(errCheckUsername, gorm.ErrRecordNotFound) {
+		_, errCheckEmail := s.IUserRepository.GetUserByEmail(user.Email)
+		if errors.Is(errCheckEmail, gorm.ErrRecordNotFound) {
+			err := s.IUserRepository.SaveNewUser(user)
+			if err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
+		} else if errCheckEmail != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, errCheckEmail.Error())
 		} else {
 			return echo.NewHTTPError(http.StatusConflict, "Email has been used in another account")
 		}
+	} else if errCheckUsername != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errCheckUsername.Error())
+	} else {
+		return echo.NewHTTPError(http.StatusConflict, "Username has been taken")
 	}
-	if !emailTaken {
-		hashedPWD, errHashPassword := helper.HashPassword(user.Password)
-		if errHashPassword != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, errHashPassword.Error())
-		}
-		client.Password = hashedPWD
-		client.IsAdmin = user.IsAdmin
-		err := s.IDatabase.SaveNewUser(client)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-	}
-
 	return nil
 }
-func (s *userServices) Login(user models.User) (dto.Login, error) {
 
-	data, err := s.IDatabase.GetUserByEmail(user.Email)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "No account using this email")
-		}
+func (s *userServices) Login(request models.User) (dto.Login, error) {
+
+	data, err := s.IUserRepository.GetUserByEmail(request.Email)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "Email or Password incorrect")
+	} else if err != nil {
 		return dto.Login{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result dto.Login
-	valid := helper.CheckPasswordHash(user.Password, data.Password)
+	valid := helper.CheckPasswordHash(request.Password, data.Password)
 	if valid {
 		token, err := middleware.GetToken(data.ID, data.Username)
 		if err != nil {
@@ -171,14 +153,14 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 			Token:    token,
 		}
 	} else {
-		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Password incorrect")
+		return dto.Login{}, echo.NewHTTPError(http.StatusForbidden, "Email or Password incorrect")
 	}
 
 	var ban int
 	//check if user are not banned
 	if data.BanUntil > int(time.Now().UnixMilli()) {
 		banLeft := data.BanUntil - int(time.Now().UnixMilli())
-		ban = banLeft / 86400000
+		ban = banLeft / DayInUnixMillisecond
 
 		//jika ban kurang dari 24 jam
 		if ban < 1 {
@@ -191,22 +173,20 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 
 	return result, nil
 }
-func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, error) {
-	u, errGetUserByUsername := s.IDatabase.GetUserByUsername(token.Username)
-	if errGetUserByUsername != nil {
-		if errGetUserByUsername.Error() == "record not found" {
-			return nil, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
-		} else {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
-		}
+func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dto.PublicUser, int, error) {
+	u, errGetUserByUsername := s.IUserRepository.GetUserByUsername(token.Username)
+	if errors.Is(errGetUserByUsername, gorm.ErrRecordNotFound) {
+		return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+	} else if errGetUserByUsername != nil {
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetUserByUsername.Error())
 	}
 
 	if !u.IsAdmin {
-		return nil, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
-	users, err := s.IDatabase.GetUsers(page)
+	users, err := s.IUserRepository.GetUsersAdminNotIncluded(page)
 	if err != nil {
-		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicUser
@@ -220,18 +200,26 @@ func (s *userServices) GetUsers(token dto.Token, page int) ([]dto.PublicUser, er
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	return result, nil
+	userCount, _ := s.IUserRepository.CountAllUserNotIncludeDeletedUser()
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := math.Ceil(float64(userCount) / float64(pageSize))
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+
+	return result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
-	user, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
-	if errGetProfile != nil {
-		if errGetProfile.Error() == "record not found" {
-			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
-		} else {
-			return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
-		}
+	user, errGetProfile := s.IUserRepository.GetProfile(int(token.ID))
+	if errors.Is(errGetProfile, gorm.ErrRecordNotFound) {
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+	} else if errGetProfile != nil {
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
 	}
+
 	result := dto.PublicUser{
 		ID:       user.ID,
 		Username: user.Username,
@@ -246,20 +234,18 @@ func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUse
 
 func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 	//get old profile
-	oldProfile, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
-	if errGetProfile != nil {
-		if errGetProfile.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
-		}
+	oldProfile, errGetProfile := s.IUserRepository.GetProfile(int(token.ID))
+	if errors.Is(errGetProfile, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+	} else if errGetProfile != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, errGetProfile.Error())
 	}
 
 	oldProfile.Username = user.Username
 	oldProfile.Photo = user.Photo
 
 	//update profile
-	errUpdateProfile := s.IDatabase.UpdateProfile(oldProfile)
+	errUpdateProfile := s.IUserRepository.UpdateProfile(oldProfile)
 	if errUpdateProfile != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errUpdateProfile.Error())
 	}
@@ -268,27 +254,105 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 }
 
 func (s *userServices) DeleteUser(token dto.Token, userId int) error {
-	//check user
-	user, err := s.IDatabase.GetUserByUsername(token.Username)
+	//check user admin
+	userAdmin, err := s.IUserRepository.GetUserByUsername(token.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	if !user.IsAdmin {
+	if !userAdmin.IsAdmin {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
-	errDeleteUser := s.IDatabase.DeleteUser(userId)
+	_, err = s.IUserRepository.GetUserById(userId)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+
+	errDeleteUser := s.IUserRepository.DeleteUser(userId)
 	if errDeleteUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
 	}
 
+	// errDeletePost := s.IUserRepository.DeletePostByUserID(userId)
+	// if errDeletePost != nil {
+	// 	return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
+	// }
+
 	return nil
+}
+
+func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error) {
+	//check user Admin
+	userAdmin, errUserAdmin := s.IUserRepository.GetUserByUsername(token.Username)
+	if errors.Is(errUserAdmin, gorm.ErrRecordNotFound) {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
+	} else if errUserAdmin != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+	}
+
+	//check if logged user is admin
+	if !userAdmin.IsAdmin {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+	}
+
+	//check user
+	user, errUser := s.IUserRepository.GetUserById(userId)
+	if errors.Is(errUser, gorm.ErrRecordNotFound) {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if errUser != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
+	}
+
+	user.Password = "<secret>"
+
+	//cek jika page kosong
+	if page < 1 {
+		page = 1
+	}
+
+	//get comment by user id
+	comments, errGetCommentByUserId := s.ICommentRepository.GetCommentByUserId(userId, page)
+	if errGetCommentByUserId != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetCommentByUserId.Error())
+	}
+
+	//insert data to dto.Public Comment
+	var result []dto.AdminComment
+	for _, comment := range comments {
+		result = append(result, dto.AdminComment{
+			Model: comment.Model,
+			Body:  comment.Body,
+			Post: dto.CommentPost{
+				PostID: comment.PostID,
+				Title:  comment.Post.Title,
+				Body:   comment.Post.Body,
+			},
+		})
+	}
+
+	//count page number
+	numberOfPost, errPage := s.ICommentRepository.CountCommentByUserID(userId)
+	if errPage != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
+	}
+
+	// Jumlah data per page
+	pageSize := 20
+
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+
+	return user, result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error) {
 	//check user Admin
-	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errUserAdmin := s.IUserRepository.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
@@ -299,14 +363,13 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//check user
-	user, errUser := s.IDatabase.GetUserById(userId)
-	if errUser != nil {
-		if errUser.Error() == "record not found" {
-			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
-		} else {
-			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
-		}
+	user, errUser := s.IUserRepository.GetUserById(userId)
+	if errors.Is(errUser, gorm.ErrRecordNotFound) {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if errUser != nil {
+		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 	}
+
 	user.Password = "<secret>"
 
 	//cek jika page kosong
@@ -315,7 +378,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//get post by user id
-	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(userId, page)
+	posts, errGetPostByUserId := s.IPostRepository.GetPostByUserId(userId, page)
 	if errGetPostByUserId != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
@@ -323,9 +386,9 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	//insert data to dto.Public post
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := s.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := s.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IPostRepository.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -352,20 +415,20 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//count page number
-	numberOfPost, errPage := s.IDatabase.CountPostByUserID(userId)
+	numberOfPost, errPage := s.IPostRepository.CountPostByUserID(userId)
 	if errPage != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
 
-	//count number of page
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
-	}
+	// Jumlah data per page
+	pageSize := 20
 
-	return user, result, numberOfPage, nil
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+
+	return user, result, int(numberOfPage), nil
 }
 
 func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPost, int, error) {
@@ -375,7 +438,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	}
 
 	//get post by user id
-	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(int(token.ID), page)
+	posts, errGetPostByUserId := s.IPostRepository.GetPostByUserId(int(token.ID), page)
 	if errGetPostByUserId != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
@@ -383,9 +446,9 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	//insert data to dto.Public post
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := s.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := s.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IPostRepository.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -412,55 +475,61 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	}
 
 	//count page number
-	numberOfPost, errPage := s.IDatabase.CountPostByUserID(int(token.ID))
+	numberOfPost, errPage := s.IPostRepository.CountPostByUserID(int(token.ID))
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
 
-	//count number of page
-	var numberOfPage int
-	if numberOfPost%20 == 0 {
-		numberOfPage = (numberOfPost / 20)
-	} else {
-		numberOfPage = (numberOfPost / 20) + 1
-	}
+	// Jumlah data per page
+	pageSize := 20
 
-	return result, numberOfPage, nil
+	// Hitung jumlah page dengan pembagian sederhana
+	numberOfPage := math.Ceil(float64(numberOfPost) / float64(pageSize))
+
+	// Jika ada sisa, tambahkan 1 page untuk menampung sisa data tersebut
+
+	return result, int(numberOfPage), nil
 }
 
-func (s *userServices) BanUser(token dto.Token, userId int, user models.User) error {
+func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (dto.PublicUser, error) {
 	//check user admin
-	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errUserAdmin := s.IUserRepository.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
 
 	//check if logged user is admin
 	if !userAdmin.IsAdmin {
-		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
 	//check if user exist
-	oldUser, errUser := s.IDatabase.GetUserById(userId)
-	if errUser != nil {
-		if errUser.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "User not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
-		}
+	oldUser, errUser := s.IUserRepository.GetUserById(userId)
+	if errors.Is(errUser, gorm.ErrRecordNotFound) {
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if errUser != nil {
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUser.Error())
 	}
 
 	//user variabel ban to store how long ban wil last
 	ban := user.BanUntil
-	const DAY_IN_UNIX_MILLISECOND = 86400000
-	user.BanUntil = int(time.Now().UnixMilli()) + (DAY_IN_UNIX_MILLISECOND * ban)
+	user.BanUntil = int(time.Now().UnixMilli()) + (DayInUnixMillisecond * ban)
 
 	//update user
 	oldUser.BanUntil = user.BanUntil
-	err := s.IDatabase.UpdateProfile(oldUser)
+	err := s.IUserRepository.UpdateProfile(oldUser)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	return nil
+	result := dto.PublicUser{
+		ID:       oldUser.ID,
+		Username: oldUser.Username,
+		Email:    oldUser.Email,
+		Photo:    oldUser.Photo,
+		IsAdmin:  oldUser.IsAdmin,
+		BanUntil: oldUser.BanUntil,
+	}
+
+	return result, nil
 }

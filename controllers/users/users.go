@@ -132,7 +132,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 	})
 }
 
-func (h *UserHandler) GetUsers(c echo.Context) error {
+func (h *UserHandler) GetUsersAdminNotIncluded(c echo.Context) error {
 	token, errDecodeJWT := helper.DecodeJWT(c)
 	if errDecodeJWT != nil {
 		return errDecodeJWT
@@ -149,14 +149,16 @@ func (h *UserHandler) GetUsers(c echo.Context) error {
 		}
 	}
 
-	result, err := h.IUserServices.GetUsers(token, page)
+	result, numberOfPage, err := h.IUserServices.GetUsersAdminNotIncluded(token, page)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message": "Success",
-		"data":    result,
+		"message":      "Success",
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -213,7 +215,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 }
 
 func (h *UserHandler) DeleteUser(c echo.Context) error {
-	userID, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userID, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -234,7 +236,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 }
 
 func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
-	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -263,11 +265,49 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"user":           user,
-		"data":           result,
-		"number_of_page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"user":         user,
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
+	})
+}
+
+func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
+	if errAtoi != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
+	}
+
+	//check if page exist
+	pageStr := c.QueryParam("page")
+	var page int
+	if pageStr == "" {
+		page = 1
+	} else {
+		var err error
+		page, err = strconv.Atoi(pageStr)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+	}
+
+	token, errDecodeJWT := helper.DecodeJWT(c)
+	if errDecodeJWT != nil {
+		return errDecodeJWT
+	}
+
+	user, result, numberOfPage, err := h.IUserServices.GetCommentAsAdmin(token, userId, page)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message":      "Success",
+		"user":         user,
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -296,10 +336,10 @@ func (h *UserHandler) GetPostByUserIdAsUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"data":           result,
-		"number_of_page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -313,7 +353,7 @@ func (h *UserHandler) BanUser(c echo.Context) error {
 	}
 
 	//get user id from param
-	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userId, errAtoi := strconv.Atoi(c.Param("userId"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -325,13 +365,13 @@ func (h *UserHandler) BanUser(c echo.Context) error {
 	}
 
 	//ban user
-	err := h.IUserServices.BanUser(token, userId, user)
+	userBanned, err := h.IUserServices.BanUser(token, userId, user)
 	if err != nil {
 		return err
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Success",
-		// "data":    result,
+		"data":    userBanned,
 	})
 }
