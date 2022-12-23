@@ -3,15 +3,16 @@ package bookmarks
 import (
 	"discusiin/dto"
 	"discusiin/models"
-	"discusiin/repositories"
+	"discusiin/repositories/bookmarks"
+	"discusiin/repositories/posts"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func NewBookmarkServices(db repositories.IDatabase) IBookmarkServices {
-	return &bookmarkServices{IDatabase: db}
+func NewBookmarkServices(dbBookmark bookmarks.IBookmarkDatabase, dbPost posts.IPostDatabase) IBookmarkServices {
+	return &bookmarkServices{IBookmarkDatabase: dbBookmark, IPostDatabase: dbPost}
 }
 
 type IBookmarkServices interface {
@@ -21,14 +22,15 @@ type IBookmarkServices interface {
 }
 
 type bookmarkServices struct {
-	repositories.IDatabase
+	bookmarks.IBookmarkDatabase
+	posts.IPostDatabase
 }
 
 func (b *bookmarkServices) AddBookmark(token dto.Token, postID int) error {
 	var newBookmark models.Bookmark
 
 	//check post if exist
-	post, err := b.IDatabase.GetPostById(postID)
+	post, err := b.IPostDatabase.GetPostById(postID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
@@ -38,7 +40,7 @@ func (b *bookmarkServices) AddBookmark(token dto.Token, postID int) error {
 	}
 
 	//check if bookmark exist
-	_, err = b.IDatabase.GetBookmarkByUserIDAndPostID(int(token.ID), int(post.ID))
+	_, err = b.IBookmarkDatabase.GetBookmarkByUserIDAndPostID(int(token.ID), int(post.ID))
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			//insert to empty bookmark field
@@ -51,7 +53,7 @@ func (b *bookmarkServices) AddBookmark(token dto.Token, postID int) error {
 		return echo.NewHTTPError(http.StatusConflict, "Post has been bookmarked")
 	}
 
-	err = b.IDatabase.SaveBookmark(newBookmark)
+	err = b.IBookmarkDatabase.SaveBookmark(newBookmark)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -63,7 +65,7 @@ func (b *bookmarkServices) DeleteBookmark(token dto.Token, bookmarkID int) error
 	//check post if needed
 
 	//check if bookmark exist
-	_, err := b.IDatabase.GetBookmarkByBookmarkID(bookmarkID)
+	_, err := b.IBookmarkDatabase.GetBookmarkByBookmarkID(bookmarkID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Bookmark not found")
@@ -73,7 +75,7 @@ func (b *bookmarkServices) DeleteBookmark(token dto.Token, bookmarkID int) error
 	}
 
 	//delete bookmark
-	err = b.IDatabase.DeleteBookmark(bookmarkID)
+	err = b.IBookmarkDatabase.DeleteBookmark(bookmarkID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -83,14 +85,14 @@ func (b *bookmarkServices) DeleteBookmark(token dto.Token, bookmarkID int) error
 
 func (b *bookmarkServices) GetAllBookmark(token dto.Token) ([]dto.PublicBookmark, error) {
 	//get all bookmark
-	bookmarks, err := b.IDatabase.GetAllBookmark(int(token.ID))
+	bookmarks, err := b.IBookmarkDatabase.GetAllBookmark(int(token.ID))
 	if err != nil {
 		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicBookmark
 	for _, bookmark := range bookmarks {
-		post, _ := b.IDatabase.GetPostById(int(bookmark.PostID))
+		post, _ := b.IPostDatabase.GetPostById(int(bookmark.PostID))
 		result = append(result, dto.PublicBookmark{
 			Model: bookmark.Model,
 			User: dto.BookmarkUser{

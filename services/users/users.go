@@ -5,7 +5,9 @@ import (
 	"discusiin/helper"
 	"discusiin/middleware"
 	"discusiin/models"
-	"discusiin/repositories"
+	"discusiin/repositories/comments"
+	"discusiin/repositories/posts"
+	"discusiin/repositories/users"
 	"math"
 	"net/http"
 	"strconv"
@@ -16,8 +18,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserServices(db repositories.IDatabase) IUserServices {
-	return &userServices{IDatabase: db}
+func NewUserServices(dbUser users.IUserDatabase, dbPost posts.IPostDatabase, dbComment comments.ICommentDatabase) IUserServices {
+	return &userServices{IUserDatabase: dbUser, IPostDatabase: dbPost, ICommentDatabase: dbComment}
 }
 
 type IUserServices interface {
@@ -35,7 +37,9 @@ type IUserServices interface {
 }
 
 type userServices struct {
-	repositories.IDatabase
+	users.IUserDatabase
+	posts.IPostDatabase
+	comments.ICommentDatabase
 }
 
 func (s *userServices) Register(user models.User) error {
@@ -54,13 +58,13 @@ func (s *userServices) Register(user models.User) error {
 	client.Password = hashedPWD
 	client.IsAdmin = user.IsAdmin
 
-	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
+	_, errCheckUsername := s.IUserDatabase.GetUserByUsername(client.Username)
 	if errCheckUsername != nil {
 		if errCheckUsername == gorm.ErrRecordNotFound {
-			_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
+			_, errCheckEmail := s.IUserDatabase.GetUserByEmail(client.Email)
 			if errCheckEmail != nil {
 				if errCheckEmail == gorm.ErrRecordNotFound {
-					err := s.IDatabase.SaveNewUser(client)
+					err := s.IUserDatabase.SaveNewUser(client)
 					if err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 					}
@@ -81,7 +85,7 @@ func (s *userServices) Register(user models.User) error {
 
 func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 	//check user
-	userAdmin, errGetUser := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errGetUser := s.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errGetUser.Error())
 	}
@@ -104,13 +108,13 @@ func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 	client.Password = hashedPWD
 	client.IsAdmin = user.IsAdmin
 
-	_, errCheckUsername := s.IDatabase.GetUserByUsername(client.Username)
+	_, errCheckUsername := s.IUserDatabase.GetUserByUsername(client.Username)
 	if errCheckUsername != nil {
 		if errCheckUsername == gorm.ErrRecordNotFound {
-			_, errCheckEmail := s.IDatabase.GetUserByEmail(client.Email)
+			_, errCheckEmail := s.IUserDatabase.GetUserByEmail(client.Email)
 			if errCheckEmail != nil {
 				if errCheckEmail == gorm.ErrRecordNotFound {
-					err := s.IDatabase.SaveNewUser(client)
+					err := s.IUserDatabase.SaveNewUser(client)
 					if err != nil {
 						return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 					}
@@ -130,7 +134,7 @@ func (s *userServices) RegisterAdmin(user models.User, token dto.Token) error {
 }
 func (s *userServices) Login(user models.User) (dto.Login, error) {
 
-	data, err := s.IDatabase.GetUserByEmail(user.Email)
+	data, err := s.IUserDatabase.GetUserByEmail(user.Email)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return dto.Login{}, echo.NewHTTPError(http.StatusNotFound, "Email or Password incorrect")
@@ -177,7 +181,7 @@ func (s *userServices) Login(user models.User) (dto.Login, error) {
 	return result, nil
 }
 func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dto.PublicUser, int, error) {
-	u, errGetUserByUsername := s.IDatabase.GetUserByUsername(token.Username)
+	u, errGetUserByUsername := s.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUserByUsername != nil {
 		if errGetUserByUsername == gorm.ErrRecordNotFound {
 			return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
@@ -189,7 +193,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 	if !u.IsAdmin {
 		return nil, 0, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
-	users, err := s.IDatabase.GetUsersAdminNotIncluded(page)
+	users, err := s.IUserDatabase.GetUsersAdminNotIncluded(page)
 	if err != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -205,7 +209,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 			IsAdmin:  user.IsAdmin,
 		})
 	}
-	userCount, _ := s.IDatabase.CountAllUserNotIncludeDeletedUser()
+	userCount, _ := s.IUserDatabase.CountAllUserNotIncludeDeletedUser()
 	// Jumlah data per page
 	pageSize := 20
 
@@ -218,7 +222,7 @@ func (s *userServices) GetUsersAdminNotIncluded(token dto.Token, page int) ([]dt
 }
 
 func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUser, error) {
-	user, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
+	user, errGetProfile := s.IUserDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
 		if errGetProfile == gorm.ErrRecordNotFound {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
@@ -240,7 +244,7 @@ func (s *userServices) GetProfile(token dto.Token, u models.User) (dto.PublicUse
 
 func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 	//get old profile
-	oldProfile, errGetProfile := s.IDatabase.GetProfile(int(token.ID))
+	oldProfile, errGetProfile := s.IUserDatabase.GetProfile(int(token.ID))
 	if errGetProfile != nil {
 		if errGetProfile == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Invalid JWT Data")
@@ -253,7 +257,7 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 	oldProfile.Photo = user.Photo
 
 	//update profile
-	errUpdateProfile := s.IDatabase.UpdateProfile(oldProfile)
+	errUpdateProfile := s.IUserDatabase.UpdateProfile(oldProfile)
 	if errUpdateProfile != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errUpdateProfile.Error())
 	}
@@ -263,7 +267,7 @@ func (s *userServices) UpdateProfile(token dto.Token, user models.User) error {
 
 func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 	//check user admin
-	userAdmin, err := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, err := s.IUserDatabase.GetUserByUsername(token.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -272,15 +276,15 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
-	_, err = s.IDatabase.GetUserById(userId)
+	_, err = s.IUserDatabase.GetUserById(userId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	errDeleteUser := s.IDatabase.DeleteUser(userId)
+	errDeleteUser := s.IUserDatabase.DeleteUser(userId)
 	if errDeleteUser != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
 	}
-	errDeletePost := s.IDatabase.DeletePostByUserID(userId)
+	errDeletePost := s.IPostDatabase.DeletePostByUserID(userId)
 	if errDeletePost != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errDeleteUser.Error())
 	}
@@ -290,7 +294,7 @@ func (s *userServices) DeleteUser(token dto.Token, userId int) error {
 
 func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.AdminComment, int, error) {
 	//check user Admin
-	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errUserAdmin := s.IUserDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
@@ -301,7 +305,7 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	}
 
 	//check user
-	user, errUser := s.IDatabase.GetUserById(userId)
+	user, errUser := s.IUserDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser == gorm.ErrRecordNotFound {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -317,7 +321,7 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	}
 
 	//get comment by user id
-	comments, errGetCommentByUserId := s.IDatabase.GetCommentByUserId(userId, page)
+	comments, errGetCommentByUserId := s.ICommentDatabase.GetCommentByUserId(userId, page)
 	if errGetCommentByUserId != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetCommentByUserId.Error())
 	}
@@ -337,7 +341,7 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 	}
 
 	//count page number
-	numberOfPost, errPage := s.IDatabase.CountCommentByUserID(userId)
+	numberOfPost, errPage := s.ICommentDatabase.CountCommentByUserID(userId)
 	if errPage != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
@@ -355,7 +359,7 @@ func (s *userServices) GetCommentAsAdmin(token dto.Token, userId int, page int) 
 
 func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (models.User, []dto.PublicPost, int, error) {
 	//check user Admin
-	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errUserAdmin := s.IUserDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
@@ -366,7 +370,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//check user
-	user, errUser := s.IDatabase.GetUserById(userId)
+	user, errUser := s.IUserDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser == gorm.ErrRecordNotFound {
 			return models.User{}, nil, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -382,7 +386,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//get post by user id
-	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(userId, page)
+	posts, errGetPostByUserId := s.IPostDatabase.GetPostByUserId(userId, page)
 	if errGetPostByUserId != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
@@ -390,9 +394,9 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	//insert data to dto.Public post
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := s.IPostDatabase.CountPostLike(int(post.ID))
+		commentCount, _ := s.IPostDatabase.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IPostDatabase.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -419,7 +423,7 @@ func (s *userServices) GetPostAsAdmin(token dto.Token, userId int, page int) (mo
 	}
 
 	//count page number
-	numberOfPost, errPage := s.IDatabase.CountPostByUserID(userId)
+	numberOfPost, errPage := s.IPostDatabase.CountPostByUserID(userId)
 	if errPage != nil {
 		return models.User{}, nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
@@ -442,7 +446,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	}
 
 	//get post by user id
-	posts, errGetPostByUserId := s.IDatabase.GetPostByUserId(int(token.ID), page)
+	posts, errGetPostByUserId := s.IPostDatabase.GetPostByUserId(int(token.ID), page)
 	if errGetPostByUserId != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errGetPostByUserId.Error())
 	}
@@ -450,9 +454,9 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	//insert data to dto.Public post
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := s.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := s.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := s.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := s.IPostDatabase.CountPostLike(int(post.ID))
+		commentCount, _ := s.IPostDatabase.CountPostComment(int(post.ID))
+		dislikeCount, _ := s.IPostDatabase.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -479,7 +483,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 	}
 
 	//count page number
-	numberOfPost, errPage := s.IDatabase.CountPostByUserID(int(token.ID))
+	numberOfPost, errPage := s.IPostDatabase.CountPostByUserID(int(token.ID))
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, errPage.Error())
 	}
@@ -497,7 +501,7 @@ func (s *userServices) GetPostAsUser(token dto.Token, page int) ([]dto.PublicPos
 
 func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (dto.PublicUser, error) {
 	//check user admin
-	userAdmin, errUserAdmin := s.IDatabase.GetUserByUsername(token.Username)
+	userAdmin, errUserAdmin := s.IUserDatabase.GetUserByUsername(token.Username)
 	if errUserAdmin != nil {
 		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, errUserAdmin.Error())
 	}
@@ -508,7 +512,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (d
 	}
 
 	//check if user exist
-	oldUser, errUser := s.IDatabase.GetUserById(userId)
+	oldUser, errUser := s.IUserDatabase.GetUserById(userId)
 	if errUser != nil {
 		if errUser == gorm.ErrRecordNotFound {
 			return dto.PublicUser{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -524,7 +528,7 @@ func (s *userServices) BanUser(token dto.Token, userId int, user models.User) (d
 
 	//update user
 	oldUser.BanUntil = user.BanUntil
-	err := s.IDatabase.UpdateProfile(oldUser)
+	err := s.IUserDatabase.UpdateProfile(oldUser)
 	if err != nil {
 		return dto.PublicUser{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

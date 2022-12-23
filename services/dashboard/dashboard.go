@@ -2,15 +2,17 @@ package dashboard
 
 import (
 	"discusiin/dto"
-	"discusiin/repositories"
+	"discusiin/repositories/posts"
+	"discusiin/repositories/topics"
+	"discusiin/repositories/users"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func NewDashboardServices(db repositories.IDatabase) IDashboardServices {
-	return &dashboardServices{IDatabase: db}
+func NewDashboardServices(dbUser users.IUserDatabase, dbPost posts.IPostDatabase, dbTopic topics.ITopicDatabase) IDashboardServices {
+	return &dashboardServices{IUserDatabase: dbUser, IPostDatabase: dbPost, ITopicDatabase: dbTopic}
 }
 
 type IDashboardServices interface {
@@ -18,12 +20,14 @@ type IDashboardServices interface {
 }
 
 type dashboardServices struct {
-	repositories.IDatabase
+	users.IUserDatabase
+	posts.IPostDatabase
+	topics.ITopicDatabase
 }
 
 func (d *dashboardServices) GetTotalCountOfUserAndTopicAndPost(token dto.Token) (int, int, int, error) {
 	//check user
-	user, errGetUser := d.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := d.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser == gorm.ErrRecordNotFound {
 			return 0, 0, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -36,17 +40,17 @@ func (d *dashboardServices) GetTotalCountOfUserAndTopicAndPost(token dto.Token) 
 	}
 
 	//get user total
-	userCount, errUserCount := d.IDatabase.CountAllUserNotAdminNotIncludeDeletedUser()
+	userCount, errUserCount := d.IUserDatabase.CountAllUserNotAdminNotIncludeDeletedUser()
 	if errUserCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserCount.Error())
 	}
 	//get topic total
-	topicCount, errTopicCount := d.IDatabase.CountAllTopic()
+	topicCount, errTopicCount := d.ITopicDatabase.CountAllTopic()
 	if errTopicCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errTopicCount.Error())
 	}
 	//get post total
-	postCount, errPostCount := d.IDatabase.CountAllPost()
+	postCount, errPostCount := d.IPostDatabase.CountAllPost()
 	if errPostCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errPostCount.Error())
 	}

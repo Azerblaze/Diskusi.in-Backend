@@ -3,15 +3,17 @@ package topics
 import (
 	"discusiin/dto"
 	"discusiin/models"
-	"discusiin/repositories"
+	"discusiin/repositories/posts"
+	"discusiin/repositories/topics"
+	"discusiin/repositories/users"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 )
 
-func NewTopicServices(db repositories.IDatabase) ITopicServices {
-	return &topicServices{IDatabase: db}
+func NewTopicServices(dbTopic topics.ITopicDatabase, dbPost posts.IPostDatabase, dbUser users.IUserDatabase) ITopicServices {
+	return &topicServices{ITopicDatabase: dbTopic, IPostDatabase: dbPost, IUserDatabase: dbUser}
 }
 
 type ITopicServices interface {
@@ -26,12 +28,14 @@ type ITopicServices interface {
 }
 
 type topicServices struct {
-	repositories.IDatabase
+	topics.ITopicDatabase
+	posts.IPostDatabase
+	users.IUserDatabase
 }
 
 func (t *topicServices) GetTopics() ([]models.Topic, error) {
 	//get all topics
-	topics, err := t.IDatabase.GetAllTopics()
+	topics, err := t.ITopicDatabase.GetAllTopics()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
@@ -44,7 +48,7 @@ func (t *topicServices) GetTopics() ([]models.Topic, error) {
 }
 func (t *topicServices) GetTopTopics() ([]dto.TopTopics, error) {
 	//get all topics
-	topTopics, err := t.IDatabase.GetTopTopics()
+	topTopics, err := t.ITopicDatabase.GetTopTopics()
 	if err != nil {
 		err := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		if err == nil {
@@ -53,7 +57,7 @@ func (t *topicServices) GetTopTopics() ([]dto.TopTopics, error) {
 		return nil, err
 	}
 	for i := range topTopics {
-		Topic, err := t.IDatabase.GetTopicByID(int(topTopics[i].TopicID))
+		Topic, err := t.ITopicDatabase.GetTopicByID(int(topTopics[i].TopicID))
 		if err != nil {
 			err := echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			if err == nil {
@@ -68,7 +72,7 @@ func (t *topicServices) GetTopTopics() ([]dto.TopTopics, error) {
 }
 func (t *topicServices) GetNumberOfPostOnATopicByTopicName(topicName string) (int, error) {
 	//get all topics
-	postCount, err := t.IDatabase.CountNumberOfPostByTopicName(topicName)
+	postCount, err := t.IPostDatabase.CountNumberOfPostByTopicName(topicName)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			err := echo.NewHTTPError(http.StatusNotFound, "Topic not found")
@@ -89,7 +93,7 @@ func (t *topicServices) GetNumberOfPostOnATopicByTopicName(topicName string) (in
 }
 func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models.Topic, error) {
 	// isAdmin?
-	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := t.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -103,14 +107,14 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 
 	var result models.Topic
 	// isExist?
-	_, errGetTopicByName := t.IDatabase.GetTopicByName(topic.Name)
+	_, errGetTopicByName := t.ITopicDatabase.GetTopicByName(topic.Name)
 	if errGetTopicByName != nil {
 		if errGetTopicByName == gorm.ErrRecordNotFound {
-			errSaveNewTopic := t.IDatabase.SaveNewTopic(topic)
+			errSaveNewTopic := t.ITopicDatabase.SaveNewTopic(topic)
 			if errSaveNewTopic != nil {
 				return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, errSaveNewTopic.Error())
 			}
-			Topic, err := t.IDatabase.GetTopicByName(topic.Name)
+			Topic, err := t.ITopicDatabase.GetTopicByName(topic.Name)
 			if err != nil {
 				return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 			}
@@ -125,7 +129,7 @@ func (t *topicServices) CreateTopic(topic models.Topic, token dto.Token) (models
 }
 
 func (t *topicServices) GetTopic(id int) (models.Topic, error) {
-	topic, err := t.IDatabase.GetTopicByID(id)
+	topic, err := t.ITopicDatabase.GetTopicByID(id)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
@@ -138,7 +142,7 @@ func (t *topicServices) GetTopic(id int) (models.Topic, error) {
 
 func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 	// isAdmin?
-	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := t.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "user not found")
@@ -150,7 +154,7 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 		return echo.NewHTTPError(http.StatusForbidden, "admin access only")
 	}
 
-	err := t.IDatabase.SaveTopic(topic)
+	err := t.ITopicDatabase.SaveTopic(topic)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -160,7 +164,7 @@ func (t *topicServices) SaveTopic(topic models.Topic, token dto.Token) error {
 
 func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 	//check user
-	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := t.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -172,7 +176,7 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 		return echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
-	topic, errGetTopic := t.IDatabase.GetTopicByID(id)
+	topic, errGetTopic := t.ITopicDatabase.GetTopicByID(id)
 	if errGetTopic != nil {
 		if errGetTopic == gorm.ErrRecordNotFound {
 			return echo.NewHTTPError(http.StatusNotFound, "Topic not found")
@@ -181,7 +185,7 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 		}
 	}
 
-	err := t.IDatabase.RemoveTopic(int(topic.ID))
+	err := t.ITopicDatabase.RemoveTopic(int(topic.ID))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -191,7 +195,7 @@ func (t *topicServices) RemoveTopic(token dto.Token, id int) error {
 
 func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.Token) (models.Topic, error) {
 
-	user, errGetUser := t.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := t.IUserDatabase.GetUserByUsername(token.Username)
 	if errGetUser != nil {
 		if errGetUser == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "User not found")
@@ -203,7 +207,7 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 		return models.Topic{}, echo.NewHTTPError(http.StatusForbidden, "Admin access only")
 	}
 
-	topic, errGetTopicByID := t.IDatabase.GetTopicByID(int(newTopic.ID))
+	topic, errGetTopicByID := t.ITopicDatabase.GetTopicByID(int(newTopic.ID))
 	if errGetTopicByID != nil {
 		if errGetTopicByID == gorm.ErrRecordNotFound {
 			return models.Topic{}, echo.NewHTTPError(http.StatusNotFound, "Topic not found")
@@ -215,7 +219,7 @@ func (t *topicServices) UpdateTopicDescription(newTopic models.Topic, token dto.
 	//update topic
 	topic.Description = newTopic.Description
 
-	err := t.IDatabase.SaveTopic(topic)
+	err := t.ITopicDatabase.SaveTopic(topic)
 	if err != nil {
 		return models.Topic{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
