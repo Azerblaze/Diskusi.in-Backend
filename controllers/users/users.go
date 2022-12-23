@@ -155,10 +155,10 @@ func (h *UserHandler) GetUsersAdminNotIncluded(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"data":           result,
-		"number-of-page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -265,11 +265,11 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"user":           user,
-		"data":           result,
-		"number-of-page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"user":         user,
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -303,11 +303,11 @@ func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"user":           user,
-		"data":           result,
-		"number-of-page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"user":         user,
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 
@@ -336,10 +336,10 @@ func (h *UserHandler) GetPostByUserIdAsUser(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{
-		"message":        "Success",
-		"data":           result,
-		"number-of-page": numberOfPage,
-		"page":           page,
+		"message":      "Success",
+		"data":         result,
+		"numberOfPage": numberOfPage,
+		"page":         page,
 	})
 }
 

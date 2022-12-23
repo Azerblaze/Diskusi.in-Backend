@@ -43,8 +43,8 @@ func DecodeJWT(ctx echo.Context) (dto.Token, error) {
 	return t, nil
 }
 
-func URLDecodeReformat(url_param_value string) string {
-	return strings.ReplaceAll(url_param_value, "%20", " ")
+func URLDecodeReformat(urlParamValue string) string {
+	return strings.ReplaceAll(urlParamValue, "%20", " ")
 }
 
 func HashPassword(password string) (string, error) {

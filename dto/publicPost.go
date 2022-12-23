@@ -22,7 +22,7 @@ type PostUser struct {
 }
 type PostTopic struct {
 	TopicID   int    `json:"topicId" form:"topicId"`
-	TopicName string `json:"topic_name" form:"topic_name"`
+	TopicName string `json:"topicName" form:"topicName"`
 }
 type PostCount struct {
 	LikeCount    int `json:"like" form:"like"`
