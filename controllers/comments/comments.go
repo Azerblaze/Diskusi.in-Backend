@@ -18,7 +18,7 @@ func (h *CommentHandler) CreateComment(c echo.Context) error {
 	var comment models.Comment
 	errBind := c.Bind(&comment)
 	if errBind != nil {
-		echo.NewHTTPError(http.StatusUnsupportedMediaType, errBind.Error())
+		return echo.NewHTTPError(http.StatusUnsupportedMediaType, errBind.Error())
 	}
 
 	//get logged userId
