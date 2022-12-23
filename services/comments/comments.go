@@ -4,9 +4,11 @@ import (
 	"discusiin/dto"
 	"discusiin/models"
 	"discusiin/repositories"
+	"errors"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 func NewCommentServices(db repositories.IDatabase) ICommentServices {
@@ -27,12 +29,10 @@ type commentServices struct {
 func (c *commentServices) CreateComment(comment models.Comment, postID int, token dto.Token) error {
 	//get post
 	post, err := c.IDatabase.GetPostById(postID)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//check if post is active
@@ -51,16 +51,15 @@ func (c *commentServices) CreateComment(comment models.Comment, postID int, toke
 	}
 
 	return nil
+
 }
 
 func (c *commentServices) GetAllComments(id int) ([]dto.PublicComment, error) {
 	comments, err := c.IDatabase.GetAllCommentByPost(id)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return nil, echo.NewHTTPError(http.StatusNotFound, "Post not found")
-		} else {
-			return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, echo.NewHTTPError(http.StatusNotFound, "Post not found")
+	} else if err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicComment
@@ -83,22 +82,18 @@ func (c *commentServices) GetAllComments(id int) ([]dto.PublicComment, error) {
 func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Token) error {
 	//get comment
 	comment, err := c.IDatabase.GetCommentById(int(newComment.ID))
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//get post
 	post, err := c.IDatabase.GetPostById(comment.PostID)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Post not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//check if post is active
@@ -127,21 +122,17 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 func (c *commentServices) DeleteComment(commentID int, token dto.Token) error {
 	//get comment
 	user, err := c.IDatabase.GetUserByUsername(token.Username)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "User not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	comment, err := c.IDatabase.GetCommentById(commentID)
-	if err != nil {
-		if err.Error() == "record not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
-		} else {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
+	} else if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	//check user
