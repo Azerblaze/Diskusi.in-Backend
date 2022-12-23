@@ -22,9 +22,9 @@ func (h *LikeHandler) LikePost(c echo.Context) error {
 	}
 
 	//get post id
-	postIDStr := c.Param("post_id")
+	postIDStr := c.Param("post-id")
 	if postIDStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id parameter should not be emtpy")
+		return echo.NewHTTPError(http.StatusBadRequest, "post-id parameter should not be emtpy")
 	}
 	postId, errAtoi := strconv.Atoi(postIDStr)
 	if errAtoi != nil {
@@ -49,7 +49,7 @@ func (h *LikeHandler) DislikePost(c echo.Context) error {
 	}
 
 	//get post id
-	postId, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("post-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

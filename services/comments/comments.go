@@ -11,8 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCommentServices(db repositories.IDatabase) ICommentServices {
-	return &commentServices{IDatabase: db}
+func NewCommentServices(commentRepo repositories.ICommentRepository, postRepo repositories.IPostRepository, userRepo repositories.IUserRepository) ICommentServices {
+	return &commentServices{ICommentRepository: commentRepo, IPostRepository: postRepo, IUserRepository: userRepo}
 }
 
 type ICommentServices interface {
@@ -23,12 +23,14 @@ type ICommentServices interface {
 }
 
 type commentServices struct {
-	repositories.IDatabase
+	repositories.ICommentRepository
+	repositories.IPostRepository
+	repositories.IUserRepository
 }
 
 func (c *commentServices) CreateComment(comment models.Comment, postID int, token dto.Token) error {
 	//get post
-	post, err := c.IDatabase.GetPostById(postID)
+	post, err := c.IPostRepository.GetPostById(postID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -45,7 +47,7 @@ func (c *commentServices) CreateComment(comment models.Comment, postID int, toke
 	comment.PostID = int(post.ID)
 	comment.IsFollowed = true
 
-	err = c.IDatabase.SaveNewComment(comment)
+	err = c.ICommentRepository.SaveNewComment(comment)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -55,7 +57,7 @@ func (c *commentServices) CreateComment(comment models.Comment, postID int, toke
 }
 
 func (c *commentServices) GetAllComments(id int) ([]dto.PublicComment, error) {
-	comments, err := c.IDatabase.GetAllCommentByPost(id)
+	comments, err := c.ICommentRepository.GetAllCommentByPost(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -81,7 +83,7 @@ func (c *commentServices) GetAllComments(id int) ([]dto.PublicComment, error) {
 
 func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Token) error {
 	//get comment
-	comment, err := c.IDatabase.GetCommentById(int(newComment.ID))
+	comment, err := c.ICommentRepository.GetCommentById(int(newComment.ID))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 	} else if err != nil {
@@ -89,7 +91,7 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 	}
 
 	//get post
-	post, err := c.IDatabase.GetPostById(comment.PostID)
+	post, err := c.IPostRepository.GetPostById(comment.PostID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -111,7 +113,7 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 	comment.Body += newComment.Body
 
 	//save comment
-	err = c.IDatabase.SaveComment(comment)
+	err = c.ICommentRepository.SaveComment(comment)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -121,14 +123,14 @@ func (c *commentServices) UpdateComment(newComment models.Comment, token dto.Tok
 
 func (c *commentServices) DeleteComment(commentID int, token dto.Token) error {
 	//get comment
-	user, err := c.IDatabase.GetUserByUsername(token.Username)
+	user, err := c.IUserRepository.GetUserByUsername(token.Username)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "User not found")
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	comment, err := c.IDatabase.GetCommentById(commentID)
+	comment, err := c.ICommentRepository.GetCommentById(commentID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 	} else if err != nil {
@@ -142,7 +144,7 @@ func (c *commentServices) DeleteComment(commentID int, token dto.Token) error {
 		}
 	}
 
-	err = c.IDatabase.DeleteComment(commentID)
+	err = c.ICommentRepository.DeleteComment(commentID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

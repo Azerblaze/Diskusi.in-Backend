@@ -21,10 +21,10 @@ func (h *FollowedPostHandler) AddFollowedPost(c echo.Context) error {
 	}
 
 	//get postId
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id should not be empty")
+	if c.Param("postd-id") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "postd-id should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postID, errAtoi := strconv.Atoi(c.Param("postd-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -48,10 +48,10 @@ func (h *FollowedPostHandler) DeleteFollowedPost(c echo.Context) error {
 	}
 
 	//get postId
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id should not be empty")
+	if c.Param("postd-id") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "postd-id should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postID, errAtoi := strconv.Atoi(c.Param("postd-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

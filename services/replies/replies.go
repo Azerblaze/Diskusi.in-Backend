@@ -11,8 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewReplyServices(db repositories.IDatabase) IReplyServices {
-	return &replyServices{IDatabase: db}
+func NewReplyServices(commentRepo repositories.ICommentRepository, replyRepo repositories.IReplyRepository) IReplyServices {
+	return &replyServices{ICommentRepository: commentRepo, IReplyRepository: replyRepo}
 }
 
 type IReplyServices interface {
@@ -23,12 +23,13 @@ type IReplyServices interface {
 }
 
 type replyServices struct {
-	repositories.IDatabase
+	repositories.ICommentRepository
+	repositories.IReplyRepository
 }
 
 func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token) error {
 	//get comment
-	comment, err := r.IDatabase.GetCommentById(co)
+	comment, err := r.ICommentRepository.GetCommentById(co)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 	} else if err != nil {
@@ -40,7 +41,7 @@ func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 	reply.UserID = int(token.ID)
 
 	//create reply
-	err = r.IDatabase.SaveNewReply(reply)
+	err = r.IReplyRepository.SaveNewReply(reply)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -49,7 +50,7 @@ func (r *replyServices) CreateReply(reply models.Reply, co int, token dto.Token)
 }
 
 func (r *replyServices) GetAllReply(commentId int) ([]dto.PublicReply, error) {
-	replies, err := r.IDatabase.GetAllReplyByComment(commentId)
+	replies, err := r.IReplyRepository.GetAllReplyByComment(commentId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, echo.NewHTTPError(http.StatusNotFound, "Comment not found")
 	} else if err != nil {
@@ -75,7 +76,7 @@ func (r *replyServices) GetAllReply(commentId int) ([]dto.PublicReply, error) {
 
 func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dto.Token) error {
 	//find reply
-	reply, err := r.IDatabase.GetReplyById(replyId)
+	reply, err := r.IReplyRepository.GetReplyById(replyId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Reply not found")
 	} else if err != nil {
@@ -92,7 +93,7 @@ func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dt
 	reply.Body += newReply.Body
 
 	//update reply
-	err = r.IDatabase.SaveReply(reply)
+	err = r.IReplyRepository.SaveReply(reply)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -102,7 +103,7 @@ func (r *replyServices) UpdateReply(newReply models.Reply, replyId int, token dt
 
 func (r *replyServices) DeleteReply(replyId int, token dto.Token) error {
 	//find reply
-	reply, err := r.IDatabase.GetReplyById(replyId)
+	reply, err := r.IReplyRepository.GetReplyById(replyId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Reply not found")
 	} else if err != nil {
@@ -115,7 +116,7 @@ func (r *replyServices) DeleteReply(replyId int, token dto.Token) error {
 	}
 
 	//delete reply
-	err = r.IDatabase.DeleteReply(replyId)
+	err = r.IReplyRepository.DeleteReply(replyId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

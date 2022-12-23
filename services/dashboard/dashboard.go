@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewDashboardServices(db repositories.IDatabase) IDashboardServices {
-	return &dashboardServices{IDatabase: db}
+func NewDashboardServices(userRepo repositories.IUserRepository, topicRepo repositories.ITopicRepository, postRepo repositories.IPostRepository) IDashboardServices {
+	return &dashboardServices{IUserRepository: userRepo, ITopicRepository: topicRepo, IPostRepository: postRepo}
 }
 
 type IDashboardServices interface {
@@ -19,12 +19,14 @@ type IDashboardServices interface {
 }
 
 type dashboardServices struct {
-	repositories.IDatabase
+	repositories.IUserRepository
+	repositories.ITopicRepository
+	repositories.IPostRepository
 }
 
 func (d *dashboardServices) GetTotalCountOfUserAndTopicAndPost(token dto.Token) (int, int, int, error) {
 	//check user
-	user, errGetUser := d.IDatabase.GetUserByUsername(token.Username)
+	user, errGetUser := d.IUserRepository.GetUserByUsername(token.Username)
 	if errors.Is(errGetUser, gorm.ErrRecordNotFound) {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusNotFound, "User not found")
 	} else if errGetUser != nil {
@@ -36,17 +38,17 @@ func (d *dashboardServices) GetTotalCountOfUserAndTopicAndPost(token dto.Token) 
 	}
 
 	//get user total
-	userCount, errUserCount := d.IDatabase.CountAllUserNotAdminNotIncludeDeletedUser()
+	userCount, errUserCount := d.IUserRepository.CountAllUserNotAdminNotIncludeDeletedUser()
 	if errUserCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errUserCount.Error())
 	}
 	//get topic total
-	topicCount, errTopicCount := d.IDatabase.CountAllTopic()
+	topicCount, errTopicCount := d.ITopicRepository.CountAllTopic()
 	if errTopicCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errTopicCount.Error())
 	}
 	//get post total
-	postCount, errPostCount := d.IDatabase.CountAllPost()
+	postCount, errPostCount := d.IPostRepository.CountAllPost()
 	if errPostCount != nil {
 		return 0, 0, 0, echo.NewHTTPError(http.StatusInternalServerError, errPostCount.Error())
 	}

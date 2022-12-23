@@ -157,7 +157,7 @@ func (h *UserHandler) GetUsersAdminNotIncluded(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           result,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
@@ -215,7 +215,7 @@ func (h *UserHandler) UpdateProfile(c echo.Context) error {
 }
 
 func (h *UserHandler) DeleteUser(c echo.Context) error {
-	userID, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userID, errAtoi := strconv.Atoi(c.Param("user-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -236,7 +236,7 @@ func (h *UserHandler) DeleteUser(c echo.Context) error {
 }
 
 func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
-	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -268,13 +268,13 @@ func (h *UserHandler) GetPostByUserIdForAdmin(c echo.Context) error {
 		"message":        "Success",
 		"user":           user,
 		"data":           result,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
 
 func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
-	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -306,7 +306,7 @@ func (h *UserHandler) GetCommentByUserIdForAdmin(c echo.Context) error {
 		"message":        "Success",
 		"user":           user,
 		"data":           result,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
@@ -338,7 +338,7 @@ func (h *UserHandler) GetPostByUserIdAsUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           result,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
@@ -353,7 +353,7 @@ func (h *UserHandler) BanUser(c echo.Context) error {
 	}
 
 	//get user id from param
-	userId, errAtoi := strconv.Atoi(c.Param("user_id"))
+	userId, errAtoi := strconv.Atoi(c.Param("user-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

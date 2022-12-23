@@ -13,8 +13,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewPostServices(db repositories.IDatabase) IPostServices {
-	return &postServices{IDatabase: db}
+func NewPostServices(topicRepo repositories.ITopicRepository, postRepo repositories.IPostRepository, userRepo repositories.IUserRepository) IPostServices {
+	return &postServices{ITopicRepository: topicRepo, IPostRepository: postRepo, IUserRepository: userRepo}
 }
 
 type IPostServices interface {
@@ -30,12 +30,14 @@ type IPostServices interface {
 }
 
 type postServices struct {
-	repositories.IDatabase
+	repositories.ITopicRepository
+	repositories.IPostRepository
+	repositories.IUserRepository
 }
 
 func (p *postServices) CreatePost(post models.Post, name string, token dto.Token) error {
 	//find topic
-	topic, err := p.IDatabase.GetTopicByName(name)
+	topic, err := p.ITopicRepository.GetTopicByName(name)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "topic not found")
 	} else if err != nil {
@@ -52,7 +54,7 @@ func (p *postServices) CreatePost(post models.Post, name string, token dto.Token
 	post.IsActive = true
 
 	//save post
-	err = p.IDatabase.SaveNewPost(post)
+	err = p.IPostRepository.SaveNewPost(post)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -62,7 +64,7 @@ func (p *postServices) CreatePost(post models.Post, name string, token dto.Token
 
 func (p *postServices) GetPosts(name string, page int, search string) ([]dto.PublicPost, int, error) {
 	//find topic
-	topic, err := p.IDatabase.GetTopicByName(name)
+	topic, err := p.ITopicRepository.GetTopicByName(name)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, 0, echo.NewHTTPError(http.StatusNotFound, "topic not found")
 	} else if err != nil {
@@ -74,16 +76,16 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 		page = 1
 	}
 
-	posts, err := p.IDatabase.GetAllPostByTopic(int(topic.ID), page, search)
+	posts, err := p.IPostRepository.GetAllPostByTopic(int(topic.ID), page, search)
 	if err != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := p.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := p.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := p.IPostRepository.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -110,7 +112,7 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 	}
 
 	//count page number
-	numberOfPost, errPage := p.IDatabase.CountPostByTopicID(int(topic.ID))
+	numberOfPost, errPage := p.IPostRepository.CountPostByTopicID(int(topic.ID))
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -129,7 +131,7 @@ func (p *postServices) GetPosts(name string, page int, search string) ([]dto.Pub
 
 func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.PublicPost, int, error) {
 	//find topic
-	topic, err := p.IDatabase.GetTopicByName(name)
+	topic, err := p.ITopicRepository.GetTopicByName(name)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, 0, echo.NewHTTPError(http.StatusNotFound, "topic not found")
 	} else if err != nil {
@@ -141,16 +143,16 @@ func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.Publi
 		page = 1
 	}
 
-	posts, err := p.IDatabase.GetAllPostByTopicByLike(int(topic.ID), page)
+	posts, err := p.IPostRepository.GetAllPostByTopicByLike(int(topic.ID), page)
 	if err != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := p.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := p.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := p.IPostRepository.CountPostDislike(int(post.ID))
 
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
@@ -177,7 +179,7 @@ func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.Publi
 	}
 
 	//count page number
-	numberOfPost, errPage := p.IDatabase.CountPostByTopicID(int(topic.ID))
+	numberOfPost, errPage := p.IPostRepository.CountPostByTopicID(int(topic.ID))
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -195,16 +197,16 @@ func (p *postServices) GetPostsByTopicByLike(name string, page int) ([]dto.Publi
 }
 
 func (p *postServices) GetPost(id int) (dto.PublicPost, error) {
-	post, err := p.IDatabase.GetPostById(id)
+	post, err := p.IPostRepository.GetPostById(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return dto.PublicPost{}, echo.NewHTTPError(http.StatusNotFound, "post not found")
 	} else if err != nil {
 		return dto.PublicPost{}, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
-	likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
-	commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
-	dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+	likeCount, _ := p.IPostRepository.CountPostLike(int(post.ID))
+	commentCount, _ := p.IPostRepository.CountPostComment(int(post.ID))
+	dislikeCount, _ := p.IPostRepository.CountPostDislike(int(post.ID))
 	result := dto.PublicPost{
 		Model:     post.Model,
 		Title:     post.Title,
@@ -233,7 +235,7 @@ func (p *postServices) GetPost(id int) (dto.PublicPost, error) {
 
 func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Token) error {
 	//get previous post
-	post, err := p.IDatabase.GetPostById(postID)
+	post, err := p.IPostRepository.GetPostById(postID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -253,7 +255,7 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 	post.Body += " "
 	post.Body += newPost.Body
 
-	err = p.IDatabase.SavePost(post)
+	err = p.IPostRepository.SavePost(post)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -263,7 +265,7 @@ func (p *postServices) UpdatePost(newPost models.Post, postID int, token dto.Tok
 
 func (p *postServices) DeletePost(id int, token dto.Token) error {
 	//find post
-	post, err := p.IDatabase.GetPostById(id)
+	post, err := p.IPostRepository.GetPostById(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -271,7 +273,7 @@ func (p *postServices) DeletePost(id int, token dto.Token) error {
 	}
 
 	//check user
-	user, err := p.IDatabase.GetUserByUsername(token.Username)
+	user, err := p.IUserRepository.GetUserByUsername(token.Username)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -282,7 +284,7 @@ func (p *postServices) DeletePost(id int, token dto.Token) error {
 		}
 	}
 
-	err = p.IDatabase.DeletePostByPostID(id)
+	err = p.IPostRepository.DeletePostByPostID(id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -296,7 +298,7 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 		page = 1
 	}
 
-	posts, err := p.IDatabase.GetRecentPost(page, search)
+	posts, err := p.IPostRepository.GetRecentPost(page, search)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -305,9 +307,9 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := p.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := p.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := p.IPostRepository.CountPostDislike(int(post.ID))
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
 			Title:     post.Title,
@@ -333,7 +335,7 @@ func (p *postServices) GetRecentPost(page int, search string) ([]dto.PublicPost,
 	}
 
 	//count page number
-	numberOfPost, errPage := p.IDatabase.CountAllPost()
+	numberOfPost, errPage := p.IPostRepository.CountAllPost()
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -358,7 +360,7 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 		page = 1
 	}
 
-	posts, err := p.IDatabase.GetAllPostByLike(page)
+	posts, err := p.IPostRepository.GetAllPostByLike(page)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, 0, echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -367,9 +369,9 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 
 	var result []dto.PublicPost
 	for _, post := range posts {
-		likeCount, _ := p.IDatabase.CountPostLike(int(post.ID))
-		commentCount, _ := p.IDatabase.CountPostComment(int(post.ID))
-		dislikeCount, _ := p.IDatabase.CountPostDislike(int(post.ID))
+		likeCount, _ := p.IPostRepository.CountPostLike(int(post.ID))
+		commentCount, _ := p.IPostRepository.CountPostComment(int(post.ID))
+		dislikeCount, _ := p.IPostRepository.CountPostDislike(int(post.ID))
 		result = append(result, dto.PublicPost{
 			Model:     post.Model,
 			Title:     post.Title,
@@ -395,7 +397,7 @@ func (p *postServices) GetAllPostByLike(page int, search string) ([]dto.PublicPo
 	}
 
 	//count page number
-	numberOfPost, errPage := p.IDatabase.CountAllPost()
+	numberOfPost, errPage := p.IPostRepository.CountAllPost()
 	if errPage != nil {
 		return nil, 0, echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -426,7 +428,7 @@ func (p *postServices) SuspendPost(token dto.Token, postId int) error {
 	}
 
 	//find post
-	post, errGetPostById := p.IDatabase.GetPostById(postId)
+	post, errGetPostById := p.IPostRepository.GetPostById(postId)
 	if errors.Is(errGetPostById, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if errGetPostById != nil {
@@ -439,7 +441,7 @@ func (p *postServices) SuspendPost(token dto.Token, postId int) error {
 		post.IsActive = true
 	}
 
-	err := p.IDatabase.SavePost(post)
+	err := p.IPostRepository.SavePost(post)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

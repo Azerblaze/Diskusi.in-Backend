@@ -54,16 +54,16 @@ func (h *TopicHandler) CreateNewTopic(c echo.Context) error {
 	})
 }
 func (h *TopicHandler) GetNumberOfPostOnATopicByTopicName(c echo.Context) error {
-	topic_name := c.Param("topic_name")
-	if topic_name == "" {
-		err := echo.NewHTTPError(http.StatusBadRequest, "topic_name should not be empty")
+	topicName := c.Param("topic-name")
+	if topicName == "" {
+		err := echo.NewHTTPError(http.StatusBadRequest, "topic-name should not be empty")
 		if err == nil {
 			panic("unexpected nil error")
 		}
 		return err
 	}
 
-	numberOfPost, err := h.ITopicServices.GetNumberOfPostOnATopicByTopicName(topic_name)
+	numberOfPost, err := h.ITopicServices.GetNumberOfPostOnATopicByTopicName(topicName)
 	if err != nil {
 		return err
 	}
@@ -97,16 +97,16 @@ func (h *TopicHandler) GetAllTopics(c echo.Context) error {
 
 func (h *TopicHandler) GetTopic(c echo.Context) error {
 
-	topic_idStr := c.Param("topic_id")
-	if topic_idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+	topicIdStr := c.Param("topic-id")
+	if topicIdStr == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "topic-id should not be empty")
 	}
-	topic_id, errAtoi := strconv.Atoi(topic_idStr)
+	topicId, errAtoi := strconv.Atoi(topicIdStr)
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
 
-	topic, err := h.ITopicServices.GetTopic(topic_id)
+	topic, err := h.ITopicServices.GetTopic(topicId)
 	if err != nil {
 		return err
 	}
@@ -131,9 +131,9 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 		return errDecodeJWT
 	}
 
-	idStr := c.Param("topic_id")
+	idStr := c.Param("topic-id")
 	if idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "topic-id should not be empty")
 	}
 	id, errAtoi := strconv.Atoi(idStr)
 	if errAtoi != nil {
@@ -164,9 +164,9 @@ func (h *TopicHandler) UpdateTopicDescription(c echo.Context) error {
 }
 
 func (h *TopicHandler) DeleteTopic(c echo.Context) error {
-	idStr := c.Param("topic_id")
+	idStr := c.Param("topic-id")
 	if idStr == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_id should not be empty")
+		return echo.NewHTTPError(http.StatusBadRequest, "topic-id should not be empty")
 	}
 	id, errAtoi := strconv.Atoi(idStr)
 	if errAtoi != nil {

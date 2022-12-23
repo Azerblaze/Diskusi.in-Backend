@@ -21,11 +21,11 @@ func (h *PostHandler) CreateNewPost(c echo.Context) error {
 		return errBind
 	}
 
-	url_param_value := c.Param("topic_name")
-	if url_param_value == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "topic_name should not be empty")
+	url := c.Param("topic-name")
+	if url == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "topic-name should not be empty")
 	}
-	topicName := helper.URLDecodeReformat(url_param_value)
+	topicName := helper.URLDecodeReformat(url)
 
 	if p.Title == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "post title should not be empty")
@@ -51,10 +51,10 @@ func (h *PostHandler) CreateNewPost(c echo.Context) error {
 }
 
 func (h *PostHandler) GetAllPostByTopicName(c echo.Context) error {
-	if c.Param("topic_name") == "" {
+	if c.Param("topic-name") == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
 	}
-	topicName := helper.URLDecodeReformat(c.Param("topic_name"))
+	topicName := helper.URLDecodeReformat(c.Param("topic-name"))
 	if topicName == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
 	}
@@ -82,16 +82,16 @@ func (h *PostHandler) GetAllPostByTopicName(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           posts,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
 
 func (h *PostHandler) GetAllPostByTopicByLike(c echo.Context) error {
-	if c.Param("topic_name") == "" {
+	if c.Param("topic-name") == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
 	}
-	topicName := helper.URLDecodeReformat(c.Param("topic_name"))
+	topicName := helper.URLDecodeReformat(c.Param("topic-name"))
 	if topicName == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "topic name should not be empty")
 	}
@@ -116,17 +116,17 @@ func (h *PostHandler) GetAllPostByTopicByLike(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           posts,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
 
 func (h *PostHandler) GetPostByPostID(c echo.Context) error {
 
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id parameter should not be empty")
+	if c.Param("post-id") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "post-id parameter should not be empty")
 	}
-	id, errAtoi := strconv.Atoi(c.Param("post_id"))
+	id, errAtoi := strconv.Atoi(c.Param("post-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -156,11 +156,11 @@ func (h *PostHandler) EditPost(c echo.Context) error {
 	}
 
 	var postID int
-	if c.Param("post_id") == "" {
+	if c.Param("post-id") == "" {
 		postID = 1
 	} else {
 		var errAtoi error
-		postID, errAtoi = strconv.Atoi(c.Param("post_id"))
+		postID, errAtoi = strconv.Atoi(c.Param("post-id"))
 		if errAtoi != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 		}
@@ -183,10 +183,10 @@ func (h *PostHandler) DeletePost(c echo.Context) error {
 	if errDecodeJWT != nil {
 		return errDecodeJWT
 	}
-	if c.Param("post_id") == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "post_id parameter should not be empty")
+	if c.Param("post-id") == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "post-id parameter should not be empty")
 	}
-	postID, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postID, errAtoi := strconv.Atoi(c.Param("post-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}
@@ -223,7 +223,7 @@ func (h *PostHandler) GetAllRecentPost(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           posts,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
@@ -251,14 +251,14 @@ func (h *PostHandler) GetAllPostSortByLike(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message":        "Success",
 		"data":           posts,
-		"number_of_page": numberOfPage,
+		"number-of-page": numberOfPage,
 		"page":           page,
 	})
 }
 
 func (h *PostHandler) SuspendPost(c echo.Context) error {
 	//check if page exist
-	postId, errAtoi := strconv.Atoi(c.Param("post_id"))
+	postId, errAtoi := strconv.Atoi(c.Param("post-id"))
 	if errAtoi != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, errAtoi.Error())
 	}

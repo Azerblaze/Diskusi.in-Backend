@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewLikeServices(db repositories.IDatabase) ILikeServices {
-	return &likeServices{IDatabase: db}
+func NewLikeServices(postRepo repositories.IPostRepository, likeRepo repositories.ILikeRepository) ILikeServices {
+	return &likeServices{IPostRepository: postRepo, ILikeRepository: likeRepo}
 }
 
 type ILikeServices interface {
@@ -22,13 +22,14 @@ type ILikeServices interface {
 }
 
 type likeServices struct {
-	repositories.IDatabase
+	repositories.IPostRepository
+	repositories.ILikeRepository
 }
 
 func (l *likeServices) LikePost(token dto.Token, postId int) error {
 	var like models.Like
 	//cek jika post ada
-	post, err := l.IDatabase.GetPostById(postId)
+	post, err := l.IPostRepository.GetPostById(postId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -38,7 +39,7 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 	var likenumber int //untuk membantu dalam perhitungan like
 
 	//cek jika like ada
-	oldLike, err := l.IDatabase.GetLikeByUserAndPostId(int(token.ID), postId)
+	oldLike, err := l.ILikeRepository.GetLikeByUserAndPostId(int(token.ID), postId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		//jika tidak ada
 		like.UserID = int(token.ID)
@@ -46,14 +47,14 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 		like.IsLike = true
 
 		//simpan data like baru
-		errSaveLike := l.IDatabase.SaveNewLike(like)
+		errSaveLike := l.ILikeRepository.SaveNewLike(like)
 		if errSaveLike != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, errSaveLike.Error())
 		}
 
 		//update like count in post table
 		post.LikeCount += 1
-		errUpdateLikeCount := l.IDatabase.SavePost(post)
+		errUpdateLikeCount := l.IPostRepository.SavePost(post)
 		if errUpdateLikeCount != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, errSaveLike.Error())
 		}
@@ -81,7 +82,7 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 
 	//simpan like baru
 	log.Println(oldLike)
-	errLike := l.IDatabase.SaveLike(oldLike)
+	errLike := l.ILikeRepository.SaveLike(oldLike)
 	if errLike != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errLike.Error())
 	}
@@ -92,7 +93,7 @@ func (l *likeServices) LikePost(token dto.Token, postId int) error {
 	} else {
 		post.LikeCount -= 1
 	}
-	errUpdateLikeCount := l.IDatabase.SavePost(post)
+	errUpdateLikeCount := l.IPostRepository.SavePost(post)
 	if errUpdateLikeCount != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errUpdateLikeCount.Error())
 	}
@@ -104,7 +105,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 
 	var like models.Like
 	// cek jika post ada
-	post, err := l.IDatabase.GetPostById(postId)
+	post, err := l.IPostRepository.GetPostById(postId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return echo.NewHTTPError(http.StatusNotFound, "Post not found")
 	} else if err != nil {
@@ -114,7 +115,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 	var dislikenumber int //untuk membantu dalam perhitungan like
 
 	//cek jika like ada
-	oldLike, err := l.IDatabase.GetLikeByUserAndPostId(int(token.ID), postId)
+	oldLike, err := l.ILikeRepository.GetLikeByUserAndPostId(int(token.ID), postId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		//jika tidak ada
 		like.UserID = int(token.ID)
@@ -122,14 +123,14 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 		like.IsDislike = true
 
 		//simpan data like baru
-		errSaveLike := l.IDatabase.SaveNewLike(like)
+		errSaveLike := l.ILikeRepository.SaveNewLike(like)
 		if errSaveLike != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, errSaveLike.Error())
 		}
 
 		//update like count in post table
 		post.LikeCount -= 1
-		errUpdateLikeCount := l.IDatabase.SavePost(post)
+		errUpdateLikeCount := l.IPostRepository.SavePost(post)
 		if errUpdateLikeCount != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, errSaveLike.Error())
 		}
@@ -153,7 +154,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 	}
 
 	//simpan like baru
-	errLike := l.IDatabase.SaveLike(oldLike)
+	errLike := l.ILikeRepository.SaveLike(oldLike)
 	if errLike != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errLike.Error())
 	}
@@ -164,7 +165,7 @@ func (l *likeServices) DislikePost(token dto.Token, postId int) error {
 	} else {
 		post.LikeCount += 1
 	}
-	errUpdateLikeCount := l.IDatabase.SavePost(post)
+	errUpdateLikeCount := l.IPostRepository.SavePost(post)
 	if errUpdateLikeCount != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, errUpdateLikeCount.Error())
 	}
