@@ -2,6 +2,7 @@ package main
 
 import (
 	"discusiin/configs"
+	"discusiin/helper"
 	"discusiin/routes"
 	v1 "discusiin/routes/v1"
 )
@@ -17,6 +18,8 @@ func main() {
 	}
 
 	routePayload.InitUserService()
+
+	helper.CreateAdmin()
 
 	e, trace := v1.InitRoute(routePayload)
 	defer trace.Close()

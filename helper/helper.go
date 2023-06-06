@@ -3,6 +3,7 @@ package helper
 import (
 	"discusiin/configs"
 	"discusiin/dto"
+	"discusiin/models"
 	"net/http"
 	"regexp"
 	"strings"
@@ -55,4 +56,23 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func CreateAdmin() {
+	var u models.User
+	u.Username = "admin"
+	u.Email = "admin@email.com"
+	pwdString := "admin123"
+	password, err := HashPassword(pwdString)
+	if err != nil {
+		panic(err)
+	}
+
+	u.Password = password
+	u.IsAdmin = true
+
+	err = configs.DB.Exec("INSERT INTO users (username, email, password, is_admin) VALUES (?, ?, ?, ?)", u.Username, u.Email, u.Password, u.IsAdmin).Error
+	if err != nil {
+		panic(err)
+	}
 }
